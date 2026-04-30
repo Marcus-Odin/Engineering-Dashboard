@@ -322,6 +322,10 @@ button:hover { background: var(--surface2); border-color: #D1D5DB; }
   </div>
   <div id="sb-label">Projects</div>
   <div id="pjl"></div>
+  <div style="padding:4px 8px 0;border-top:1px solid var(--border2);margin-top:4px">
+    <div style="font-size:10px;font-family:var(--mono);color:var(--txt4);letter-spacing:0.06em;padding:8px 8px 2px">Tools</div>
+    <div id="inv-nav"></div>
+  </div>
   <div id="sb-footer">
     <button class="btn-full" id="np-btn">+ New project</button>
     <div id="np-form" style="display:none;margin-top:8px">
@@ -465,10 +469,10 @@ const DEFAULT_PROJECTS = [
       { id:2, author:'Sam T.',    date:'Apr 25', type:'info',      text:'I2C 100kHz workaround confirmed stable for now', resolved:false, isBlocker:false }
     ],
     bom:[
-      { id:1, part:'ESP32-WROOM-32',    qty:5,  have:true,  ordered:true,  received:true,  notes:'Digi-Key' },
-      { id:2, part:'DHT22 Temp Sensor', qty:10, have:false, ordered:true,  received:false, notes:'' },
-      { id:3, part:'0.1µF Caps ×50',   qty:2,  have:true,  ordered:true,  received:true,  notes:'' },
-      { id:4, part:'Custom PCB v1.2',   qty:5,  have:false, ordered:false, received:false, notes:'Awaiting sign-off' }
+      { id:1, part:'ESP32-WROOM-32',    inventoryId:null, qtyPerBuild:1, unitCost:4.50,  notes:'' },
+      { id:2, part:'DHT22 Temp Sensor', inventoryId:null, qtyPerBuild:10, unitCost:3.75, notes:'' },
+      { id:3, part:'0.1µF Caps ×50',   inventoryId:null, qtyPerBuild:2, unitCost:1.20,  notes:'' },
+      { id:4, part:'Custom PCB v1.2',   inventoryId:null, qtyPerBuild:1, unitCost:22.00, notes:'Awaiting sign-off' }
     ],
     blockers:[
       { id:1, text:'PCB design needs review before ordering', done:false },
@@ -490,9 +494,9 @@ const DEFAULT_PROJECTS = [
       { id:1, author:'Sam T.', date:'Apr 26', type:'direction', text:'Schematic needs team review before we can order PCBs — can you schedule 30 min this week?', resolved:false, isBlocker:false }
     ],
     bom:[
-      { id:1, part:'Arduino Mega 2560',    qty:3,  have:true,  ordered:true,  received:true,  notes:'' },
-      { id:2, part:'A4988 Stepper Driver', qty:10, have:false, ordered:false, received:false, notes:'' },
-      { id:3, part:'NEMA17 Motor',          qty:4,  have:false, ordered:false, received:false, notes:'' }
+      { id:1, part:'Arduino Mega 2560',    inventoryId:null, qtyPerBuild:1, unitCost:38.00, notes:'' },
+      { id:2, part:'A4988 Stepper Driver', inventoryId:null, qtyPerBuild:4, unitCost:2.50,  notes:'' },
+      { id:3, part:'NEMA17 Motor',         inventoryId:null, qtyPerBuild:4, unitCost:12.00, notes:'' }
     ],
     blockers:[ { id:1, text:'Schematic review not yet scheduled', done:false } ],
     notes:'No bench tests yet.',
@@ -507,8 +511,8 @@ const DEFAULT_PROJECTS = [
       { id:1, author:'Alex R.', date:'Apr 29', type:'direction', text:'Need sign-off on cert testing budget ($800) — quote is attached in the SharePoint project folder', resolved:false, isBlocker:false }
     ],
     bom:[
-      { id:1, part:'ESP32-S3 Module', qty:10, have:true, ordered:true, received:true, notes:'' },
-      { id:2, part:'Custom PCB v2.0',  qty:10, have:true, ordered:true, received:true, notes:'' }
+      { id:1, part:'ESP32-S3 Module', inventoryId:null, qtyPerBuild:1, unitCost:6.00,  notes:'' },
+      { id:2, part:'Custom PCB v2.0', inventoryId:null, qtyPerBuild:1, unitCost:28.00, notes:'' }
     ],
     blockers:[],
     notes:'OTA stable. BLE 15m LOS, 8m through wall. Certification testing queued.',
@@ -527,14 +531,18 @@ const DEFAULT_PROJECTS = [
 let S = {
   sel: 1,              // ID of the currently selected project
   tab: 'overview',     // Which tab is active: 'overview','bom','firmware','settings','import'
+  view: 'projects',    // Top-level view: 'projects' | 'inventory'
   showArchived: false, // Whether archived projects are visible at the bottom of the sidebar
   importTxt: '',       // The text currently typed in the Import tab textarea
   preview: null,       // Parsed result of the import preview (null if not previewed yet)
   newBlocker: '',      // Text in the "add blocker" input (preserved across re-renders)
   showUF: false,       // Whether the "Post update" form is expanded
   editingUpdateId: null, // ID of the update currently being edited inline
+  editingBomId: null,    // ID of the BOM item currently being edited
+  editingInvId: null,    // ID of the inventory item currently being edited
   ud: { type: 'direction', author: '', text: '' }, // Current state of the post-update form
-  projects: JSON.parse(JSON.stringify(DEFAULT_PROJECTS)) // Deep copy so defaults aren't mutated
+  projects: JSON.parse(JSON.stringify(DEFAULT_PROJECTS)), // Deep copy so defaults aren't mutated
+  inventory: []        // Global parts inventory (shared across all projects)
 };
 
 // ── PERSISTENCE ────────────────────────────────────────────────────────────
@@ -544,6 +552,7 @@ let S = {
 async function save() {
   try {
     await sbClient.from('hub_data').upsert({ id: 1, projects: S.projects });
+    await sbClient.from('hub_data').upsert({ id: 2, projects: S.inventory }); // row 2 stores inventory
   } catch(e) { console.error('Save failed:', e); }
 }
 
@@ -552,25 +561,44 @@ async function save() {
 // doesn't break when we add features like 'archived' or 'sections'.
 async function load() {
   try {
+    // Load projects (row 1)
     const { data, error } = await sbClient
-      .from('hub_data')
-      .select('projects')
-      .eq('id', 1)
-      .single();
+      .from('hub_data').select('projects').eq('id', 1).single();
     if (error) throw error;
     if (data?.projects?.length) {
-      // Migration: ensure every project has the fields added in newer versions
       data.projects.forEach(p => {
-        if (!Array.isArray(p.sections)) p.sections = []; // added in v2
-        if (p.archived === undefined)   p.archived = false; // added in v3
-        if (!Array.isArray(p.updates))  p.updates = [];
-        if (!Array.isArray(p.blockers)) p.blockers = [];
-        if (p.summary === undefined)    p.summary = '';
-        // added in v4: isBlocker flag on each update
+        if (!Array.isArray(p.sections))  p.sections = [];
+        if (p.archived === undefined)    p.archived = false;
+        if (!Array.isArray(p.updates))   p.updates = [];
+        if (!Array.isArray(p.blockers))  p.blockers = [];
+        if (p.summary === undefined)     p.summary = '';
         p.updates.forEach(u => { if (u.isBlocker === undefined) u.isBlocker = false; });
+        // v5 BOM migration: move to cost-focused format
+        p.bom.forEach(b => {
+          if (b.qtyPerBuild === undefined) b.qtyPerBuild = b.qty || 1;
+          if (b.unitCost    === undefined) b.unitCost    = 0;
+          if (b.inventoryId === undefined) b.inventoryId = null;
+        });
       });
       S.projects = data.projects;
       S.sel = S.projects[0].id;
+    }
+
+    // Load inventory (row 2)
+    const { data: invData } = await sbClient
+      .from('hub_data').select('projects').eq('id', 2).single();
+    if (invData?.projects?.length) {
+      invData.projects.forEach(item => {
+        if (item.qtyOnHand    === undefined) item.qtyOnHand    = 0;
+        if (item.qtyOrdered   === undefined) item.qtyOrdered   = 0;
+        if (item.reorderAt    === undefined) item.reorderAt    = 5;
+        if (item.ordered      === undefined) item.ordered      = false;
+        if (item.received     === undefined) item.received     = false;
+        if (item.supplier     === undefined) item.supplier     = '';
+        if (item.supplierUrl  === undefined) item.supplierUrl  = '';
+        if (item.unitCost     === undefined) item.unitCost     = 0;
+      });
+      S.inventory = invData.projects;
     }
   } catch(e) { console.error('Load failed:', e); }
 }
@@ -591,6 +619,19 @@ function stag(s) {
   const [bg, tc] = STAGE_C[s] || STAGE_C.Concept;
   return `<span class="tag" style="background:${bg};color:${tc}">${s}</span>`;
 }
+// getSharedProjects() returns names of other projects that also use a given part
+function getSharedProjects(partName, currentProjectId) {
+  return S.projects
+    .filter(p => p.id !== currentProjectId && !p.archived &&
+      p.bom.some(b => b.part.toLowerCase() === partName.toLowerCase()))
+    .map(p => p.name);
+}
+
+// getInventoryItem() finds an inventory item by part name (case-insensitive)
+function getInventoryItem(partName) {
+  return S.inventory.find(i => i.part.toLowerCase() === partName.toLowerCase());
+}
+
 function mbar(v, c='#3B82F6') {
   return `<div class="mini-bar"><div class="mini-bar-fill" style="width:${v}%;background:${c}"></div></div>`;
 }
@@ -685,7 +726,25 @@ function rSB() {
       </div>`;
   }
 
+  // Low stock count for inventory badge
+  const lowStock = S.inventory.filter(i => i.qtyOnHand <= i.reorderAt).length;
+
   document.getElementById('pjl').innerHTML = activeHtml + archivedHtml;
+
+  // Inventory nav button
+  document.getElementById('inv-nav').innerHTML = `
+    <button data-goInventory
+      style="width:100%;text-align:left;padding:10px;border-radius:var(--radius);
+             background:${S.view==='inventory'?'var(--blue-lt)':'none'};
+             border:none;cursor:pointer;display:flex;align-items:center;
+             justify-content:space-between;font-size:12px;font-weight:500;
+             color:${S.view==='inventory'?'var(--blue-dk)':'var(--txt2)'};transition:background 0.1s"
+      onmouseover="if(this.dataset.goInventory!==undefined&&'${S.view}'!=='inventory')this.style.background='var(--surface2)'"
+      onmouseout="if('${S.view}'!=='inventory')this.style.background='none'"
+    >
+      <span>📦 Inventory</span>
+      ${lowStock ? `<span class="badge" style="background:#FEF3C7;color:#92400E">${lowStock} low</span>` : ''}
+    </button>`;
 }
 
 // ── Stage tracker ──────────────────────────────────────────────────────────
@@ -1006,47 +1065,111 @@ function rSection(sec) {
 
 // ── Tab: BOM ───────────────────────────────────────────────────────────────
 function rBOM(p) {
-  const rcvd = p.bom.filter(b=>b.received).length;
-  const pct  = p.bom.length ? Math.round(rcvd/p.bom.length*100) : 0;
-  return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-    <span style="font-size:10px;font-family:var(--mono);color:var(--txt4)">${rcvd}/${p.bom.length} received</span>
-    <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
-      <div style="height:100%;width:${pct}%;background:#3B82F6;border-radius:3px"></div>
+  const costPerBuild = p.bom.reduce((s,b) => s + (b.qtyPerBuild||1)*(parseFloat(b.unitCost)||0), 0);
+
+  const rows = p.bom.length ? p.bom.map(b => {
+    // ── Inline edit row ──
+    if (S.editingBomId == b.id) {
+      return `<tr style="background:#F8FAFF;">
+        <td colspan="6" style="padding:10px 12px">
+          <div style="display:grid;grid-template-columns:2fr 80px 100px 1fr;gap:8px;margin-bottom:8px;align-items:end">
+            <div>
+              <div style="font-size:10px;font-family:var(--mono);color:var(--txt4);margin-bottom:3px">Part name</div>
+              <input type="text" data-bedit-part="${b.id}" value="${esc(b.part)}" style="font-family:var(--sans);width:100%">
+            </div>
+            <div>
+              <div style="font-size:10px;font-family:var(--mono);color:var(--txt4);margin-bottom:3px">Qty/Build</div>
+              <input type="number" data-bedit-qty="${b.id}" value="${b.qtyPerBuild||1}" min="1" style="text-align:center;width:100%">
+            </div>
+            <div>
+              <div style="font-size:10px;font-family:var(--mono);color:var(--txt4);margin-bottom:3px">Unit Cost $</div>
+              <input type="number" data-bedit-cost="${b.id}" value="${parseFloat(b.unitCost)||0}" min="0" step="0.01" style="text-align:right;width:100%">
+            </div>
+            <div>
+              <div style="font-size:10px;font-family:var(--mono);color:var(--txt4);margin-bottom:3px">Notes</div>
+              <input type="text" data-bedit-notes="${b.id}" value="${esc(b.notes||'')}" style="font-family:var(--sans);width:100%">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button data-savebomedit="${b.id}" class="btn-primary" style="font-size:11px;padding:5px 14px">Save</button>
+            <button data-cancelbomedit style="font-size:11px;padding:5px 14px;color:var(--txt4)">Cancel</button>
+          </div>
+        </td>
+      </tr>`;
+    }
+
+    const lineTotal = (b.qtyPerBuild||1) * (parseFloat(b.unitCost)||0);
+    const shared = getSharedProjects(b.part, p.id);
+    const invItem = getInventoryItem(b.part);
+    const sharedBadge = shared.length
+      ? `<span title="Also used in: ${shared.join(', ')}"
+           style="font-size:9px;font-family:var(--mono);background:#EDE9FE;color:#5B21B6;
+                  border-radius:4px;padding:1px 6px;cursor:default;white-space:nowrap">
+           shared · ${shared.length}
+         </span>` : '';
+    const invBadge = invItem
+      ? `<span title="In inventory: ${invItem.qtyOnHand} on hand"
+           style="font-size:9px;font-family:var(--mono);background:#DCFCE7;color:#15803D;
+                  border-radius:4px;padding:1px 6px;cursor:default;white-space:nowrap">
+           inv: ${invItem.qtyOnHand}
+         </span>` : '';
+    return `<tr>
+      <td style="font-weight:500;color:var(--txt1)">
+        <div>${esc(b.part)}</div>
+        <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${sharedBadge}${invBadge}</div>
+      </td>
+      <td style="text-align:center;font-family:var(--mono)">${b.qtyPerBuild||1}</td>
+      <td style="text-align:right;font-family:var(--mono)">$${(parseFloat(b.unitCost)||0).toFixed(2)}</td>
+      <td style="text-align:right;font-family:var(--mono);font-weight:500;color:var(--blue-dk)">$${lineTotal.toFixed(2)}</td>
+      <td style="color:var(--txt4);font-size:11px">${esc(b.notes)||'—'}</td>
+      <td style="text-align:center;white-space:nowrap">
+        <button data-editbom="${b.id}" style="font-size:11px;color:#6B7280;padding:3px 8px;margin-right:3px">Edit</button>
+        <button class="btn-del" data-delbom="${b.id}">×</button>
+      </td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--txt4);font-family:var(--mono)">No parts added yet</td></tr>`;
+
+  // Inventory part names for datalist autocomplete
+  const invParts = S.inventory.map(i => `<option value="${esc(i.part)}">`).join('');
+
+  return `
+  <div class="card" style="margin-bottom:12px;background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border-color:#86EFAC">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:10px;font-family:var(--mono);color:#15803D;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:4px">Cost per build</div>
+        <div style="font-size:26px;font-weight:600;color:#15803D;font-family:var(--mono)">$${costPerBuild.toFixed(2)}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="font-size:11px;font-family:var(--mono);color:#15803D">Units:</label>
+        <input type="number" id="bom-units" min="1" value="1"
+          style="width:70px;text-align:center;font-family:var(--mono);font-size:14px;font-weight:600;border-color:#86EFAC;background:rgba(255,255,255,0.7)">
+        <span style="font-size:13px;color:#15803D">= <strong id="bom-run-total">$${costPerBuild.toFixed(2)}</strong></span>
+      </div>
     </div>
-    <span style="font-size:10px;font-family:var(--mono);color:#3B82F6;min-width:28px;text-align:right">${pct}%</span>
   </div>
-  <div class="bom-wrap">
+  <div class="bom-wrap" style="margin-bottom:14px">
     <table>
       <thead><tr>
         <th style="text-align:left">Part</th>
-        <th style="text-align:center">Qty</th>
-        <th style="text-align:center">Have</th>
-        <th style="text-align:center">Ordered</th>
-        <th style="text-align:center">Received</th>
+        <th style="text-align:center">Qty/Build</th>
+        <th style="text-align:right">Unit Cost</th>
+        <th style="text-align:right">Line Total</th>
         <th style="text-align:left">Notes</th>
         <th></th>
       </tr></thead>
-      <tbody>
-        ${p.bom.length
-          ? p.bom.map(b=>`<tr>
-              <td style="font-weight:500;color:var(--txt1)">${esc(b.part)}</td>
-              <td style="text-align:center;font-family:var(--mono)">${b.qty}</td>
-              ${['have','ordered','received'].map(f=>`<td style="text-align:center"><input type="checkbox" ${b[f]?'checked':''} data-bid="${b.id}" data-field="${f}"></td>`).join('')}
-              <td style="color:var(--txt4)">${esc(b.notes)||'—'}</td>
-              <td style="text-align:center"><button class="btn-del" data-delbom="${b.id}">×</button></td>
-            </tr>`).join('')
-          : `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--txt4)">No parts added yet</td></tr>`}
-      </tbody>
+      <tbody>${rows}</tbody>
     </table>
   </div>
-  <div class="card" style="margin-top:4px">
+  <div class="card">
     <div class="card-lbl">Add part</div>
-    <div style="display:grid;grid-template-columns:2fr 70px 1fr;gap:8px;margin-bottom:8px">
-      <input type="text" id="bom-part"  placeholder="Part name…" style="font-family:var(--sans)">
-      <input type="text" id="bom-qty"   placeholder="Qty" style="text-align:center">
+    <datalist id="inv-parts-dl">${invParts}</datalist>
+    <div style="display:grid;grid-template-columns:2fr 80px 100px 1fr auto;gap:8px;align-items:center">
+      <input type="text" id="bom-part"  list="inv-parts-dl" placeholder="Part name…" style="font-family:var(--sans)">
+      <input type="number" id="bom-qty" placeholder="Qty/build" min="1" value="1" style="text-align:center">
+      <input type="number" id="bom-cost" placeholder="Unit cost $" min="0" step="0.01" style="text-align:right">
       <input type="text" id="bom-notes" placeholder="Notes…" style="font-family:var(--sans)">
+      <button data-addbom class="btn-primary" style="font-size:12px;padding:6px 16px;white-space:nowrap">Add</button>
     </div>
-    <button data-addbom class="btn-primary" style="font-size:12px;padding:6px 16px">Add to BOM</button>
   </div>`;
 }
 
@@ -1195,6 +1318,173 @@ function rImport() {
   </div>` : ''}`;
 }
 
+// ── Inventory Manager ──────────────────────────────────────────────────────
+function rInventory() {
+  const hdr  = document.getElementById('proj-hdr');
+  const body = document.getElementById('proj-body');
+
+  const lowStock = S.inventory.filter(i => i.qtyOnHand <= i.reorderAt);
+
+  hdr.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+      <div style="flex:1">
+        <h1 style="font-size:18px;font-weight:600;letter-spacing:-0.01em">📦 Inventory Manager</h1>
+        <div style="font-size:12px;color:var(--txt4);margin-top:2px">${S.inventory.length} parts · ${lowStock.length} low stock</div>
+      </div>
+    </div>`;
+
+  // Build parts used-in map across all projects
+  const usedIn = {};
+  S.projects.filter(p => !p.archived).forEach(p => {
+    p.bom.forEach(b => {
+      const key = b.part.toLowerCase();
+      if (!usedIn[key]) usedIn[key] = [];
+      if (!usedIn[key].includes(p.name)) usedIn[key].push(p.name);
+    });
+  });
+
+  const lowBanner = lowStock.length ? `
+    <div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:var(--radius-lg);padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:16px">⚠</span>
+      <div>
+        <div style="font-size:12px;font-weight:500;color:#92400E">${lowStock.length} part${lowStock.length>1?'s':''} below reorder threshold</div>
+        <div style="font-size:11px;color:#B45309;font-family:var(--mono)">${lowStock.map(i=>esc(i.part)).join(' · ')}</div>
+      </div>
+    </div>` : '';
+
+  const invRows = S.inventory.length ? S.inventory.map(item => {
+    // ── Inline edit row ──
+    if (S.editingInvId == item.id) {
+      return `<tr style="background:#F8FAFF;">
+        <td colspan="11" style="padding:12px 14px">
+          <div style="display:grid;grid-template-columns:2fr 80px 80px 100px 1fr 70px 1fr;gap:8px;margin-bottom:8px;align-items:end">
+            <div>
+              <div style="font-size:10px;font-family:var(--mono);color:var(--txt4);margin-bottom:3px">Part name</div>
+              <input type="text" data-iedit-part="${item.id}" value="${esc(item.part)}" style="font-family:var(--sans);width:100%">
+            </div>
+            <div>
+              <div style="font-size:10px;font-family:var(--mono);color:var(--txt4);margin-bottom:3px">On Hand</div>
+              <input type="number" data-iedit-onhand="${item.id}" value="${item.qtyOnHand||0}" min="0" style="text-align:center;width:100%">
+            </div>
+            <div>
+              <div style="font-size:10px;font-family:var(--mono);color:var(--txt4);margin-bottom:3px">On Order</div>
+              <input type="number" data-iedit-ordered="${item.id}" value="${item.qtyOrdered||0}" min="0" style="text-align:center;width:100%">
+            </div>
+            <div>
+              <div style="font-size:10px;font-family:var(--mono);color:var(--txt4);margin-bottom:3px">Unit Cost $</div>
+              <input type="number" data-iedit-cost="${item.id}" value="${parseFloat(item.unitCost)||0}" min="0" step="0.01" style="text-align:right;width:100%">
+            </div>
+            <div>
+              <div style="font-size:10px;font-family:var(--mono);color:var(--txt4);margin-bottom:3px">Supplier</div>
+              <input type="text" data-iedit-supplier="${item.id}" value="${esc(item.supplier||'')}" style="font-family:var(--sans);width:100%">
+            </div>
+            <div>
+              <div style="font-size:10px;font-family:var(--mono);color:var(--txt4);margin-bottom:3px">Reorder @</div>
+              <input type="number" data-iedit-reorder="${item.id}" value="${item.reorderAt||5}" min="0" style="text-align:center;width:100%">
+            </div>
+            <div>
+              <div style="font-size:10px;font-family:var(--mono);color:var(--txt4);margin-bottom:3px">Supplier URL</div>
+              <input type="text" data-iedit-url="${item.id}" value="${esc(item.supplierUrl||'')}" style="font-family:var(--mono);font-size:11px;width:100%">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button data-saveinvedit="${item.id}" class="btn-primary" style="font-size:11px;padding:5px 14px">Save</button>
+            <button data-cancelinvedit style="font-size:11px;padding:5px 14px;color:var(--txt4)">Cancel</button>
+          </div>
+        </td>
+      </tr>`;
+    }
+
+    const projects = usedIn[item.part.toLowerCase()] || [];
+    const isLow = item.qtyOnHand <= item.reorderAt;
+    const rowStyle = isLow ? 'background:#FFFBEB;' : '';
+    return `<tr style="${rowStyle}">
+      <td style="font-weight:500;color:var(--txt1)">${esc(item.part)}</td>
+      <td style="text-align:center;font-family:var(--mono)">
+        <span style="font-weight:600;color:${isLow?'#D97706':'var(--txt1)'}">${item.qtyOnHand}</span>
+        ${isLow ? '<span style="font-size:9px;color:#D97706;font-family:var(--mono)"> low</span>' : ''}
+      </td>
+      <td style="text-align:center;font-family:var(--mono)">${item.qtyOrdered||0}</td>
+      <td style="text-align:center">
+        <input type="checkbox" ${item.ordered?'checked':''} data-invfield="${item.id}" data-field="ordered" title="Ordered">
+      </td>
+      <td style="text-align:center">
+        <input type="checkbox" ${item.received?'checked':''} data-invfield="${item.id}" data-field="received" title="Received">
+      </td>
+      <td style="text-align:right;font-family:var(--mono)">$${(parseFloat(item.unitCost)||0).toFixed(2)}</td>
+      <td style="color:var(--txt2)">${esc(item.supplier)||'—'}</td>
+      <td>${item.supplierUrl ? `<a href="${esc(item.supplierUrl)}" target="_blank" style="font-size:11px;color:var(--blue)">Link ↗</a>` : '—'}</td>
+      <td style="text-align:center;font-family:var(--mono);color:var(--txt4)">${item.reorderAt}</td>
+      <td>
+        ${projects.length
+          ? projects.map(n=>`<span style="font-size:9px;font-family:var(--mono);background:${projects.length>1?'#EDE9FE':'var(--surface2)'};color:${projects.length>1?'#5B21B6':'var(--txt3)'};border-radius:4px;padding:1px 6px;margin:1px;display:inline-block">${esc(n)}</span>`).join('')
+          : '<span style="font-size:10px;color:var(--txt4);font-family:var(--mono)">—</span>'}
+      </td>
+      <td style="text-align:center;white-space:nowrap">
+        <button data-editinv="${item.id}" style="font-size:11px;color:#6B7280;padding:3px 8px;margin-right:3px">Edit</button>
+        <button class="btn-del" data-delinv="${item.id}">×</button>
+      </td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="11" style="text-align:center;padding:32px;color:var(--txt4);font-family:var(--mono)">No parts in inventory yet — add one below</td></tr>`;
+
+  body.innerHTML = `
+    ${lowBanner}
+    <div class="bom-wrap" style="margin-bottom:14px;overflow-x:auto">
+      <table style="min-width:900px">
+        <thead><tr>
+          <th style="text-align:left">Part</th>
+          <th style="text-align:center">On Hand</th>
+          <th style="text-align:center">On Order</th>
+          <th style="text-align:center">Ordered</th>
+          <th style="text-align:center">Received</th>
+          <th style="text-align:right">Unit Cost</th>
+          <th style="text-align:left">Supplier</th>
+          <th style="text-align:left">Link</th>
+          <th style="text-align:center">Reorder @</th>
+          <th style="text-align:left">Used In</th>
+          <th></th>
+        </tr></thead>
+        <tbody>${invRows}</tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-lbl">Add part to inventory</div>
+      <div style="display:grid;grid-template-columns:2fr 80px 80px 100px 1fr 70px 1fr auto;gap:8px;align-items:end">
+        <div>
+          <label class="s-label" for="inv-part">Part name</label>
+          <input type="text" id="inv-part" style="font-family:var(--sans)">
+        </div>
+        <div>
+          <label class="s-label" for="inv-onhand">On hand</label>
+          <input type="number" id="inv-onhand" min="0" value="0" style="text-align:center">
+        </div>
+        <div>
+          <label class="s-label" for="inv-ordered">On order</label>
+          <input type="number" id="inv-ordered" min="0" value="0" style="text-align:center">
+        </div>
+        <div>
+          <label class="s-label" for="inv-cost">Unit cost $</label>
+          <input type="number" id="inv-cost" min="0" step="0.01" value="0" style="text-align:right">
+        </div>
+        <div>
+          <label class="s-label" for="inv-supplier">Supplier</label>
+          <input type="text" id="inv-supplier" style="font-family:var(--sans)">
+        </div>
+        <div>
+          <label class="s-label" for="inv-reorder">Reorder @</label>
+          <input type="number" id="inv-reorder" min="0" value="5" style="text-align:center">
+        </div>
+        <div>
+          <label class="s-label" for="inv-url">Supplier URL</label>
+          <input type="text" id="inv-url" style="font-family:var(--mono);font-size:11px">
+        </div>
+        <div style="padding-bottom:1px">
+          <button data-addinv class="btn-primary" style="font-size:12px;padding:7px 16px;white-space:nowrap;width:100%">Add part</button>
+        </div>
+      </div>
+    </div>`;
+}
+
 // ── Main render ────────────────────────────────────────────────────────────
 function rMain() {
   const p = P();
@@ -1259,7 +1549,28 @@ function rMain() {
   const sm = document.getElementById('s-member');
   if (sm) sm.addEventListener('keydown', e=>{ if(e.key==='Enter') doAddMember(); });
   const bp = document.getElementById('bom-part');
-  if (bp) bp.addEventListener('keydown', e=>{ if(e.key==='Enter') doAddBOM(); });
+  if (bp) {
+    bp.addEventListener('keydown', e=>{ if(e.key==='Enter') doAddBOM(); });
+    // Auto-fill unit cost from inventory when a known part is selected
+    bp.addEventListener('change', e => {
+      const inv = getInventoryItem(e.target.value);
+      if (inv) {
+        const costEl = document.getElementById('bom-cost');
+        if (costEl && !costEl.value) costEl.value = inv.unitCost;
+      }
+    });
+  }
+
+  // BOM build calculator: update run total when units input changes
+  const buEl = document.getElementById('bom-units');
+  if (buEl) {
+    const costPerBuild = p.bom.reduce((s,b)=>s+(b.qtyPerBuild||1)*(parseFloat(b.unitCost)||0),0);
+    buEl.addEventListener('input', e => {
+      const units = parseInt(e.target.value)||1;
+      const rt = document.getElementById('bom-run-total');
+      if (rt) rt.textContent = '$' + (units * costPerBuild).toFixed(2);
+    });
+  }
 
   // Overview summary textarea live-save
   const sumta = document.getElementById('proj-summary-ta');
@@ -1304,7 +1615,11 @@ function rMain() {
   });
 }
 
-function render() { rSB(); rMain(); }
+function render() {
+  rSB();
+  if (S.view === 'inventory') rInventory();
+  else rMain();
+}
 
 // ── Sidebar events ─────────────────────────────────────────────────────────
 // Note: move/archive/restore handlers must come BEFORE the [data-pid] handler
@@ -1328,9 +1643,12 @@ document.getElementById('sb').addEventListener('click', e => {
   const rs = e.target.closest('[data-restore]');
   if (rs) { e.stopPropagation(); doRestoreProject(parseInt(rs.dataset.restore)); return; }
 
+  // Go to inventory view
+  if (e.target.closest('[data-goInventory]')) { S.view='inventory'; render(); return; }
+
   // Select a project (switch main panel to it)
   const pj = e.target.closest('[data-pid]');
-  if (pj) { S.sel=parseInt(pj.dataset.pid); S.tab='overview'; S.preview=null; S.showUF=false; render(); }
+  if (pj) { S.sel=parseInt(pj.dataset.pid); S.tab='overview'; S.view='projects'; S.preview=null; S.showUF=false; render(); }
 });
 document.getElementById('np-btn').addEventListener('click', () => {
   document.getElementById('np-btn').style.display='none';
@@ -1420,6 +1738,23 @@ document.getElementById('mn').addEventListener('click', e => {
   const db = e.target.closest('[data-delbom]');
   if (db) { doDeleteBOM(db.dataset.delbom); return; }
 
+  // Inventory
+  if (e.target.closest('[data-addinv]')) { doAddInventory(); return; }
+  const di = e.target.closest('[data-delinv]');
+  if (di) { doDeleteInventory(di.dataset.delinv); return; }
+  const ei = e.target.closest('[data-editinv]');
+  if (ei) { S.editingInvId = parseInt(ei.dataset.editinv); rInventory(); return; }
+  const sei = e.target.closest('[data-saveinvedit]');
+  if (sei) { doSaveInvEdit(sei.dataset.saveinvedit); return; }
+  if (e.target.closest('[data-cancelinvedit]')) { S.editingInvId = null; rInventory(); return; }
+
+  // BOM edit
+  const eb = e.target.closest('[data-editbom]');
+  if (eb) { S.editingBomId = parseInt(eb.dataset.editbom); rMain(); return; }
+  const sbe = e.target.closest('[data-savebomedit]');
+  if (sbe) { doSaveBomEdit(sbe.dataset.savebomedit); return; }
+  if (e.target.closest('[data-cancelbomedit]')) { S.editingBomId = null; rMain(); return; }
+
   // Sections
   if (e.target.closest('[data-opensecmodal]')) { openSecModal(); return; }
   if (e.target.closest('[data-closesecmodal]')) { document.getElementById('sec-modal').style.display='none'; return; }
@@ -1441,17 +1776,20 @@ document.getElementById('mn').addEventListener('click', e => {
 
 // ── Main change events ─────────────────────────────────────────────────────
 document.getElementById('mn').addEventListener('change', e => {
-  if (e.target.dataset.bid) {
-    const b = P().bom.find(x=>x.id==e.target.dataset.bid);
-    if (b) { b[e.target.dataset.field]=e.target.checked; save(); rMain(); }
-    return;
-  }
+  // (BOM checkboxes removed — ordered/received now lives in Inventory Manager)
   if (e.target.dataset.btog) {
     const b = P().blockers.find(x=>x.id==e.target.dataset.btog);
     if (b) { b.done=!b.done; save(); rMain(); }
     return;
   }
   // fw/hw sliders are wired directly in rMain() post-render for live updates
+
+  // Inventory field checkboxes (ordered / received)
+  if (e.target.dataset.invfield) {
+    const item = S.inventory.find(i => i.id == e.target.dataset.invfield);
+    if (item) { item[e.target.dataset.field] = e.target.checked; save(); rSB(); }
+    return;
+  }
   if (e.target.dataset.milcheck) {
     const sec = (P().sections||[]).find(s=>s.id==e.target.dataset.milcheck);
     if (sec) {
@@ -1554,13 +1892,65 @@ function doDeleteProject() {
 }
 
 function doAddBOM() {
-  const part  = document.getElementById('bom-part')?.value.trim();
-  const qty   = parseInt(document.getElementById('bom-qty')?.value)||1;
-  const notes = document.getElementById('bom-notes')?.value.trim()||'';
+  const part        = document.getElementById('bom-part')?.value.trim();
+  const qtyPerBuild = parseInt(document.getElementById('bom-qty')?.value)||1;
+  const unitCost    = parseFloat(document.getElementById('bom-cost')?.value)||0;
+  const notes       = document.getElementById('bom-notes')?.value.trim()||'';
   if (!part) return;
-  P().bom.push({ id:Date.now(), part, qty, have:false, ordered:false, received:false, notes });
+  // Link to inventory if part exists there
+  const invItem = getInventoryItem(part);
+  P().bom.push({ id:Date.now(), part, inventoryId: invItem?.id||null,
+    qtyPerBuild, unitCost: invItem ? invItem.unitCost : unitCost, notes });
   P().log.unshift({ date:tdy(), text:`BOM: added ${part}` });
   save(); rMain();
+}
+
+function doSaveBomEdit(id) {
+  const b = P().bom.find(x => x.id == id);
+  if (!b) return;
+  b.part        = document.querySelector(`[data-bedit-part="${id}"]`)?.value.trim()  || b.part;
+  b.qtyPerBuild = parseInt(document.querySelector(`[data-bedit-qty="${id}"]`)?.value) || 1;
+  b.unitCost    = parseFloat(document.querySelector(`[data-bedit-cost="${id}"]`)?.value) || 0;
+  b.notes       = document.querySelector(`[data-bedit-notes="${id}"]`)?.value.trim() || '';
+  // Re-link to inventory if part name changed
+  const inv = getInventoryItem(b.part);
+  b.inventoryId = inv ? inv.id : null;
+  P().log.unshift({ date:tdy(), text:`BOM: edited ${b.part}` });
+  S.editingBomId = null;
+  save(); rMain();
+}
+
+function doSaveInvEdit(id) {
+  const item = S.inventory.find(x => x.id == id);
+  if (!item) return;
+  item.part        = document.querySelector(`[data-iedit-part="${id}"]`)?.value.trim()     || item.part;
+  item.qtyOnHand   = parseInt(document.querySelector(`[data-iedit-onhand="${id}"]`)?.value)  || 0;
+  item.qtyOrdered  = parseInt(document.querySelector(`[data-iedit-ordered="${id}"]`)?.value) || 0;
+  item.unitCost    = parseFloat(document.querySelector(`[data-iedit-cost="${id}"]`)?.value)  || 0;
+  item.supplier    = document.querySelector(`[data-iedit-supplier="${id}"]`)?.value.trim()   || '';
+  item.reorderAt   = parseInt(document.querySelector(`[data-iedit-reorder="${id}"]`)?.value) || 5;
+  item.supplierUrl = document.querySelector(`[data-iedit-url="${id}"]`)?.value.trim()        || '';
+  S.editingInvId = null;
+  save(); rInventory(); rSB();
+}
+
+function doAddInventory() {
+  const part       = document.getElementById('inv-part')?.value.trim();
+  const qtyOnHand  = parseInt(document.getElementById('inv-onhand')?.value)||0;
+  const qtyOrdered = parseInt(document.getElementById('inv-ordered')?.value)||0;
+  const unitCost   = parseFloat(document.getElementById('inv-cost')?.value)||0;
+  const supplier   = document.getElementById('inv-supplier')?.value.trim()||'';
+  const reorderAt  = parseInt(document.getElementById('inv-reorder')?.value)||5;
+  const supplierUrl= document.getElementById('inv-url')?.value.trim()||'';
+  if (!part) return;
+  S.inventory.push({ id:Date.now(), part, qtyOnHand, qtyOrdered, unitCost,
+    supplier, supplierUrl, reorderAt, ordered:false, received:false });
+  save(); rInventory(); rSB();
+}
+
+function doDeleteInventory(id) {
+  S.inventory = S.inventory.filter(i => i.id != id);
+  save(); rInventory(); rSB();
 }
 
 function doDeleteBOM(id) {
