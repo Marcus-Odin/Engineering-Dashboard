@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ODIN ENG. — Project Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --bg: #000000;
+  --surface: #FFFFFF;
+  --surface2: #F3F4F6;
+  --border: #E5E7EB;
+  --border2: #F3F4F6;
+  --txt1: #111827;
+  --txt2: #374151;
+  --txt3: #6B7280;
+  --txt4: #9CA3AF;
+  --blue: #3B82F6;
+  --blue-bg: #EFF6FF;
+  --blue-lt: #DBEAFE;
+  --blue-dk: #1E40AF;
+  --amber: #F59E0B;
+  --amber-bg: #FFFBEB;
+  --amber-lt: #FEF3C7;
+  --amber-dk: #92400E;
+  --green: #22C55E;
+  --green-lt: #DCFCE7;
+  --green-dk: #15803D;
+  --red-lt: #FEE2E2;
+  --red-dk: #991B1B;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: var(--sans); font-size: 13px; color: var(--txt1); background: var(--bg); }
+body { display: flex; overflow: hidden; }
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+#sb {
+  width: 220px; flex-shrink: 0; background: var(--surface);
+  border-right: 1px solid var(--border); display: flex;
+  flex-direction: column; height: 100vh; overflow: hidden;
+}
+#sb-head { padding: 18px 16px 12px; border-bottom: 1px solid var(--border2); flex-shrink: 0; }
+#sb-head .app-name { font-size: 15px; font-weight: 600; color: var(--txt1); letter-spacing: -0.01em; }
+#sb-head .app-sub  { font-size: 10px; font-family: var(--mono); color: var(--txt4); letter-spacing: 0.04em; margin-top: 2px; }
+#sb-label { padding: 10px 16px 4px; font-size: 10px; font-family: var(--mono); color: var(--txt4); letter-spacing: 0.06em; }
+#pjl { flex: 1; overflow-y: auto; padding: 0 8px 8px; }
+#pjl::-webkit-scrollbar { width: 3px; }
+#pjl::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+#sb-footer { padding: 10px 8px; border-top: 1px solid var(--border); flex-shrink: 0; }
+
+.pj { padding: 10px; border-radius: var(--radius); cursor: pointer; transition: background 0.1s; margin-bottom: 2px; }
+.pj:hover:not(.on) { background: var(--surface2); }
+.pj.on { background: var(--blue-lt); }
+.pj .pj-name { font-size: 12px; font-weight: 500; color: var(--txt1); margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; }
+.pj.on .pj-name { color: var(--blue-dk); }
+
+/* ── Main ────────────────────────────────────────────────────────────────── */
+#mn { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+#proj-hdr { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 22px 0; flex-shrink: 0; }
+#proj-body { flex: 1; overflow-y: auto; padding: 16px 22px; }
+#proj-body::-webkit-scrollbar { width: 4px; }
+#proj-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+.tabs { display: flex; margin-top: 6px; flex-wrap: wrap; }
+.tb { background: none; border: none; cursor: pointer; padding: 8px 14px; font-family: var(--sans); font-size: 13px; color: var(--txt4); border-bottom: 2px solid transparent; transition: all 0.15s; }
+.tb:hover:not(.on) { color: var(--txt2); }
+.tb.on { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 12px; }
+.card-lbl { font-size: 10px; font-family: var(--mono); color: var(--txt4); letter-spacing: 0.07em; margin-bottom: 10px; text-transform: uppercase; }
+
+/* ── Stage tracker ───────────────────────────────────────────────────────── */
+#stage-wrap { position: relative; padding: 10px 0 6px; }
+#stage-track-bg { position: absolute; top: 15px; left: 10%; width: 80%; height: 2px; background: var(--border); z-index: 0; }
+#stage-track-fg { position: absolute; top: 15px; left: 10%; height: 2px; background: var(--green); z-index: 0; transition: width 0.3s; }
+#stage-dots { display: flex; position: relative; z-index: 1; }
+.sg-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; padding: 0; }
+.sg-btn:hover .sg-dot { transform: scale(1.2); }
+.sg-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--border); background: #fff; transition: transform 0.15s; }
+.sg-lbl { font-size: 8px; font-family: var(--mono); color: var(--txt4); white-space: nowrap; }
+
+/* ── Updates panel ───────────────────────────────────────────────────────── */
+#upd-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 14px; }
+.upd-hdr { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
+.upd-row { padding: 10px 14px; display: flex; gap: 10px; align-items: flex-start; border-top: 1px solid var(--border2); }
+.upd-form-wrap { padding: 12px 14px; border-top: 1px solid var(--border2); background: #FAFAFA; }
+
+/* ── BOM table ───────────────────────────────────────────────────────────── */
+.bom-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 14px; }
+.bom-wrap table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.bom-wrap th { padding: 8px 12px; font-size: 10px; font-family: var(--mono); color: var(--txt4); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 1px solid var(--border); background: var(--surface2); }
+.bom-wrap td { padding: 8px 12px; color: var(--txt2); border-bottom: 1px solid var(--border2); background: var(--surface); }
+.bom-wrap tr:last-child td { border-bottom: none; }
+.bom-wrap tr:hover td { background: var(--surface2); }
+
+/* ── Inputs & buttons ────────────────────────────────────────────────────── */
+input[type=text], textarea, select {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--txt1); font-family: var(--mono);
+  font-size: 12px; padding: 7px 10px; outline: none; width: 100%;
+  transition: border-color 0.15s;
+}
+input[type=text]:focus, textarea:focus, select:focus { border-color: var(--blue); background: #fff; }
+select { font-family: var(--sans); cursor: pointer; }
+textarea { resize: vertical; line-height: 1.6; }
+input[type=checkbox] { cursor: pointer; accent-color: var(--blue); width: 14px; height: 14px; }
+input[type=range] { cursor: pointer; accent-color: var(--blue); width: 100%; }
+
+button {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 5px 12px; font-family: var(--sans);
+  font-size: 12px; color: var(--txt2); cursor: pointer; transition: all 0.1s;
+  white-space: nowrap;
+}
+button:hover { background: var(--surface2); border-color: #D1D5DB; }
+.btn-primary { background: var(--blue-lt); color: var(--blue-dk); border-color: #BFDBFE; }
+.btn-primary:hover { background: #BFDBFE; }
+.btn-warn { background: var(--amber-lt); color: var(--amber-dk); border-color: #FDE68A; }
+.btn-danger { background: var(--red-lt); color: var(--red-dk); border-color: #FECACA; }
+.btn-danger:hover { background: #FECACA; }
+.btn-full { width: 100%; text-align: center; }
+
+/* ── Tags & badges ───────────────────────────────────────────────────────── */
+.tag { display: inline-flex; align-items: center; font-family: var(--mono); font-size: 9px; letter-spacing: 0.05em; border-radius: 4px; padding: 2px 7px; }
+.badge { display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-family: var(--mono); border-radius: 10px; padding: 1px 6px; font-weight: 500; }
+
+/* ── Progress bars ───────────────────────────────────────────────────────── */
+.pbar-wrap { }
+.pbar-lbl { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.pbar-lbl span { font-size: 11px; font-family: var(--mono); color: var(--txt4); }
+.pbar-lbl strong { font-size: 11px; font-family: var(--mono); }
+.pbar-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.pbar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.mini-bar { height: 2px; background: var(--border); border-radius: 1px; margin-top: 7px; overflow: hidden; }
+.mini-bar-fill { height: 100%; border-radius: 1px; background: var(--blue); }
+
+/* ── Grid ────────────────────────────────────────────────────────────────── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid2 .full { grid-column: 1 / -1; }
+
+/* ── Chips ───────────────────────────────────────────────────────────────── */
+.chip { display: inline-flex; align-items: center; font-size: 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; color: var(--txt2); margin: 2px; gap: 4px; }
+.chip-x { border: none; background: none; color: var(--txt4); font-size: 14px; cursor: pointer; padding: 0 2px; line-height: 1; }
+.chip-x:hover { color: var(--red-dk); background: none; border: none; }
+
+/* ── Blocker rows ────────────────────────────────────────────────────────── */
+.blk-row { display: flex; gap: 10px; align-items: flex-start; padding: 9px 11px; background: var(--surface2); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 7px; }
+.blk-row.done { opacity: 0.45; }
+.blk-row.done span { text-decoration: line-through; color: var(--txt4); }
+
+/* ── Sidebar blocker flash ────────────────────────────────────────────────── */
+@keyframes pjFlash {
+  0%,100% { background: transparent; box-shadow: none; }
+  50%      { background: #FEE2E2; box-shadow: inset 0 0 0 2px #FCA5A5; }
+}
+.pj.has-blocker { animation: pjFlash 2s ease-in-out infinite; border-radius: var(--radius); }
+.pj.has-blocker.on { animation: none; background: var(--blue-lt); }
+
+/* ── Update edit inline form ─────────────────────────────────────────────── */
+.upd-edit-wrap { padding: 12px 14px; border-top: 1px solid var(--border2); background: #FAFAFA; }
+
+/* ── Activity log ────────────────────────────────────────────────────────── */
+.act-row { display: flex; gap: 14px; margin-bottom: 8px; }
+.act-date { font-size: 10px; font-family: var(--mono); color: var(--txt4); white-space: nowrap; padding-top: 1px; min-width: 44px; }
+
+/* ── Import code block ───────────────────────────────────────────────────── */
+.code-block { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; font-family: var(--mono); font-size: 11px; line-height: 1.9; }
+.code-key { color: var(--blue); display: inline-block; min-width: 100px; }
+.code-val { color: var(--txt4); }
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+.empty { text-align: center; padding: 40px; color: var(--txt4); font-size: 12px; font-family: var(--mono); }
+
+/* ── Settings form ───────────────────────────────────────────────────────── */
+.s-field { margin-bottom: 14px; }
+.s-label { font-size: 10px; font-family: var(--mono); color: var(--txt4); letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 5px; }
+
+/* ── Modal overlays ──────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-box {
+  background: #fff; border-radius: 14px; padding: 22px; width: 420px;
+  max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+}
+.modal-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.modal-sub { font-size: 12px; color: var(--txt4); margin-bottom: 16px; }
+
+/* ── Section picker grid ─────────────────────────────────────────────────── */
+.sec-pick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sec-pick-opt { padding: 14px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .15s; text-align: left; background: var(--surface); }
+.sec-pick-opt:hover { border-color: var(--blue); background: var(--blue-bg); }
+.sec-pick-icon { font-size: 20px; margin-bottom: 6px; display: block; }
+.sec-pick-lbl { font-size: 12px; font-weight: 500; color: var(--txt1); display: block; }
+.sec-pick-desc { font-size: 10px; color: var(--txt4); margin-top: 2px; display: block; }
+
+/* ── Custom section cards ────────────────────────────────────────────────── */
+.sec-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 12px; overflow: hidden; }
+.sec-card-hdr { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.sec-card-body { padding: 14px; }
+
+/* ── Section inner tables ────────────────────────────────────────────────── */
+.sec-tbl { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 12px; }
+.sec-tbl th { padding: 6px 10px; font-size: 10px; font-family: var(--mono); color: var(--txt4); font-weight: 500; text-transform: uppercase; border-bottom: 1px solid var(--border); background: var(--surface2); text-align: left; }
+.sec-tbl td { padding: 7px 10px; border-bottom: 1px solid var(--border2); color: var(--txt2); }
+.sec-tbl tr:last-child td { border-bottom: none; }
+.btn-del { font-size: 10px; padding: 2px 7px; color: #EF4444; border-color: #FECACA; background: #FEF2F2; }
+.btn-del:hover { background: #FECACA; }
+
+/* ── Add section dashed button ───────────────────────────────────────────── */
+.btn-add-sec { width: 100%; padding: 11px; color: var(--txt4); font-size: 12px; border-style: dashed; margin-top: 4px; background: transparent; }
+.btn-add-sec:hover { background: var(--surface2); color: var(--txt2); border-color: #9CA3AF; }
+
+/* ── Scrollbar global ────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Mobile menu button (hidden on desktop) ──────────────────────────────── */
+#mob-bar { display: none; }
+
+/* ── Mobile styles ───────────────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  body { flex-direction: column; overflow: auto; }
+
+  /* Mobile top bar */
+  #mob-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 50; flex-shrink: 0;
+  }
+  #mob-bar .app-name { font-size: 15px; font-weight: 600; }
+  #mob-bar .app-sub  { font-size: 10px; font-family: var(--mono); color: var(--txt4); }
+  #mob-menu-btn {
+    background: none; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 6px 10px; font-size: 16px; cursor: pointer; color: var(--txt2);
+  }
+
+  /* Sidebar becomes a slide-in drawer */
+  #sb {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+    width: 260px; height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.12);
+  }
+  #sb.open { transform: translateX(0); }
+
+  /* Overlay behind sidebar */
+  #sb-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 90;
+  }
+  #sb-overlay.show { display: block; }
+
+  /* Main takes full width */
+  #mn { height: auto; overflow: visible; }
+  #proj-hdr { position: sticky; top: 0; z-index: 40; padding: 10px 14px 0; }
+  #proj-body { padding: 12px 14px; overflow: visible; }
+
+  /* Collapse two-column grid to one column */
+  .grid2 { grid-template-columns: 1fr; }
+
+  /* Tables scroll horizontally */
+  .bom-wrap { overflow-x: auto; }
+  .sec-tbl  { min-width: 480px; }
+
+  /* Tabs scroll horizontally */
+  .tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tb { padding: 8px 10px; font-size: 12px; flex-shrink: 0; }
+
+  /* Stack BOM add-part form */
+  #tab-content [style*="grid-template-columns:2fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stack section add forms */
+  .sec-card-body [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modal sizing */
+  .modal-box { width: 92vw; padding: 18px; }
+
+  /* Header adjustments */
+  #proj-hdr h1 { font-size: 15px; }
+  #proj-hdr a[href] { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Mobile top bar -->
+<div id="mob-bar">
+  <div>
+    <div class="app-name">Engineering Hub</div>
+    <div class="app-sub">project dashboard</div>
+  </div>
+  <button id="mob-menu-btn">☰</button>
+</div>
+
+<!-- Sidebar overlay (mobile) -->
+<div id="sb-overlay"></div>
+
+<!-- Sidebar -->
+<div id="sb">
+  <div id="sb-head">
+    <div class="app-name">ODIN ENG.</div>
+    <div class="app-sub">Project Hub</div>
+  </div>
+  <div id="sb-label">Projects</div>
+  <div id="pjl"></div>
+  <div id="sb-footer">
+    <button class="btn-full" id="np-btn">+ New project</button>
+    <div id="np-form" style="display:none;margin-top:8px">
+      <input type="text" id="np-inp" placeholder="Project name…" style="margin-bottom:6px;font-family:var(--sans)">
+      <div style="display:flex;gap:6px">
+        <button id="np-ok" style="flex:1;font-size:11px">Create</button>
+        <button id="np-x"  style="flex:1;font-size:11px">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div id="mn">
+  <div id="proj-hdr"></div>
+  <div id="proj-body"></div>
+</div>
+
+<!-- Section picker modal -->
+<div id="sec-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">Add a section</div>
+    <div class="modal-sub">Choose a panel type to add to this project</div>
+    <div class="sec-pick-grid" id="sec-pick-grid"></div>
+    <button data-closesecmodal style="margin-top:14px;width:100%;text-align:center;color:var(--txt4)">Cancel</button>
+  </div>
+</div>
+
+<!-- Delete project confirm modal -->
+<div id="del-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">Delete project?</div>
+    <div class="modal-sub" id="del-modal-sub"></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button data-confirmdelete class="btn-danger" style="flex:1;padding:9px">Yes, delete</button>
+      <button data-canceldelete style="flex:1;padding:9px">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// ENGINEERING PROJECT HUB — Main Script
+// ════════════════════════════════════════════════════════════════════════════
+//
+// HOW THIS FILE IS ORGANIZED:
+//   1. Constants    — fixed values like stage names and colors
+//   2. Default data — the example projects shown on first load
+//   3. State (S)    — everything the app needs to remember while running
+//   4. Persistence  — save() and load() talk to the Supabase cloud database
+//   5. Helpers      — small reusable functions used throughout
+//   6. Render fns   — rSB(), rMain(), rOverview() etc. build the HTML you see
+//   7. Event handlers — respond to clicks, checkboxes, text input
+//   8. Action fns   — doAddBOM(), doArchiveProject() etc. change the data
+//   9. Boot         — loads data from cloud then draws the page
+//
+// TO MAKE CHANGES:
+//   • Change colors → edit the CSS :root variables near the top of <style>
+//   • Change stage names → edit the STAGES array below
+//   • Change update types → edit the UPD_T object below
+//   • Change what a tab shows → find its render function (e.g. rBOM, rOverview)
+//   • Add a new tab → add it to the tabs array in rMain(), add a case in the
+//     switch statement, and write a new render function like rMyTab(p)
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── CONSTANTS ─────────────────────────────────────────────────────────────
+// STAGES: the project lifecycle steps shown in the progress tracker.
+// Order matters — they appear left to right. Add or rename as needed.
+const STAGES = ['Concept','Design','Prototyping','Testing','Complete'];
+
+// STAGE_C: background color and text color for each stage tag/badge.
+// Format: StageName: ['background hex', 'text hex']
+const STAGE_C = {
+  Concept:     ['#F3F4F6','#374151'],
+  Design:      ['#DBEAFE','#1E40AF'],
+  Prototyping: ['#FEF3C7','#92400E'],
+  Testing:     ['#FEE2E2','#991B1B'],
+  Complete:    ['#DCFCE7','#15803D']
+};
+
+// UPD_T: the types of team updates that can be posted.
+// l = label shown on the tag, bg = tag background, tc = tag text color.
+// Add a new type here and it will appear in the dropdown automatically.
+const UPD_T = {
+  direction: { l:'Needs direction', bg:'#FEF3C7', tc:'#92400E' },
+  request:   { l:'Project request', bg:'#EDE9FE', tc:'#5B21B6' },
+  ordered:   { l:'Ordered',         bg:'#DBEAFE', tc:'#1E40AF' },
+  info:      { l:'Info / FYI',      bg:'#F3F4F6', tc:'#374151' },
+  done:      { l:'Done',            bg:'#DCFCE7', tc:'#15803D' }
+};
+
+// SEC_TYPES: the optional section panels that can be added to any project.
+// Each entry becomes a button in the "Add section" picker.
+const SEC_TYPES = {
+  budget:     { label:'Budget',      icon:'💰', desc:'Track parts costs & spending' },
+  milestones: { label:'Milestones',  icon:'🎯', desc:'Key dates & checkpoints' },
+  testlog:    { label:'Test Log',    icon:'⚡', desc:'Record test results' },
+  links:      { label:'Links',       icon:'🔗', desc:'Resources & references' },
+  custom:     { label:'Custom Note', icon:'📝', desc:'Freeform text block' }
+};
+
+// ── SUPABASE CONNECTION ────────────────────────────────────────────────────
+// Supabase is the cloud database that stores all project data so every user
+// sees the same information. These two values identify your account/project.
+// If you ever need to reset the key, go to supabase.com → Settings → API.
+const SUPABASE_URL = 'https://gworcazpplokwlyonipd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_fTbIsexDMR-USeRJ9B3jIw_ho-dBZfJ';
+const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── DEFAULT PROJECT DATA ───────────────────────────────────────────────────
+// These are the example projects shown the very first time the app loads
+// (before any real data exists in Supabase). Once your team saves real data,
+// these are never used again — Supabase data takes over.
+//
+// Each project object has these fields:
+//   id       — unique number (use Date.now() for new ones)
+//   name     — project name shown in sidebar
+//   stage    — must match one of the STAGES values above
+//   desc     — short one-line description
+//   lead     — name of the project lead
+//   team     — array of team member name strings
+//   fw       — firmware progress, 0 to 100
+//   hw       — hardware progress, 0 to 100
+//   sp       — SharePoint folder URL for this project
+//   archived — true = hidden from sidebar (can still be restored)
+//   sections — array of optional added panels (budget, milestones, etc.)
+//   updates  — array of team update posts
+//   bom      — array of bill-of-materials items
+//   blockers — array of blocker items
+//   notes    — bench test notes (free text)
+//   log      — array of activity log entries {date, text}
+const DEFAULT_PROJECTS = [
+  {
+    id:1, name:'ESP32 Sensor Hub', stage:'Prototyping',
+    desc:'Multi-sensor IoT hub with MQTT reporting',
+    lead:'Jordan M.', team:['Jordan M.','Sam T.','Alex R.'],
+    fw:60, hw:80, sp:'https://sharepoint.com', archived:false, sections:[],
+    summary:'',
+    updates:[
+      { id:1, author:'Jordan M.', date:'Apr 27', type:'direction', text:'Need 10 more DHT22 sensors ordered before prototype run — see BOM tab for part number', resolved:false, isBlocker:false },
+      { id:2, author:'Sam T.',    date:'Apr 25', type:'info',      text:'I2C 100kHz workaround confirmed stable for now', resolved:false, isBlocker:false }
+    ],
+    bom:[
+      { id:1, part:'ESP32-WROOM-32',    qty:5,  have:true,  ordered:true,  received:true,  notes:'Digi-Key' },
+      { id:2, part:'DHT22 Temp Sensor', qty:10, have:false, ordered:true,  received:false, notes:'' },
+      { id:3, part:'0.1µF Caps ×50',   qty:2,  have:true,  ordered:true,  received:true,  notes:'' },
+      { id:4, part:'Custom PCB v1.2',   qty:5,  have:false, ordered:false, received:false, notes:'Awaiting sign-off' }
+    ],
+    blockers:[
+      { id:1, text:'PCB design needs review before ordering', done:false },
+      { id:2, text:'MQTT broker credentials pending from IT', done:false }
+    ],
+    notes:'Bench test #2 pass. UART stable. I2C errors at 400kHz — workaround: 100kHz. Avg draw 180mA.',
+    log:[
+      { date:'Apr 28', text:'Firmware updated to 60%' },
+      { date:'Apr 27', text:'DHT22 sensors ordered' },
+      { date:'Apr 25', text:'Bench test #2 complete' }
+    ]
+  },
+  {
+    id:2, name:'Motor Controller', stage:'Design',
+    desc:'Closed-loop stepper driver for CNC rig',
+    lead:'Sam T.', team:['Sam T.','Alex R.'],
+    fw:20, hw:40, sp:'https://sharepoint.com', archived:false, sections:[], summary:'',
+    updates:[
+      { id:1, author:'Sam T.', date:'Apr 26', type:'direction', text:'Schematic needs team review before we can order PCBs — can you schedule 30 min this week?', resolved:false, isBlocker:false }
+    ],
+    bom:[
+      { id:1, part:'Arduino Mega 2560',    qty:3,  have:true,  ordered:true,  received:true,  notes:'' },
+      { id:2, part:'A4988 Stepper Driver', qty:10, have:false, ordered:false, received:false, notes:'' },
+      { id:3, part:'NEMA17 Motor',          qty:4,  have:false, ordered:false, received:false, notes:'' }
+    ],
+    blockers:[ { id:1, text:'Schematic review not yet scheduled', done:false } ],
+    notes:'No bench tests yet.',
+    log:[ { date:'Apr 26', text:'Project created' }, { date:'Apr 26', text:'Initial BOM added' } ]
+  },
+  {
+    id:3, name:'BLE Gateway', stage:'Testing',
+    desc:'BLE-to-WiFi bridge with OTA support',
+    lead:'Alex R.', team:['Alex R.','Jordan M.'],
+    fw:90, hw:100, sp:'https://sharepoint.com', archived:false, sections:[], summary:'',
+    updates:[
+      { id:1, author:'Alex R.', date:'Apr 29', type:'direction', text:'Need sign-off on cert testing budget ($800) — quote is attached in the SharePoint project folder', resolved:false, isBlocker:false }
+    ],
+    bom:[
+      { id:1, part:'ESP32-S3 Module', qty:10, have:true, ordered:true, received:true, notes:'' },
+      { id:2, part:'Custom PCB v2.0',  qty:10, have:true, ordered:true, received:true, notes:'' }
+    ],
+    blockers:[],
+    notes:'OTA stable. BLE 15m LOS, 8m through wall. Certification testing queued.',
+    log:[
+      { date:'Apr 29', text:'OTA test passed' },
+      { date:'Apr 28', text:'BLE range testing done' },
+      { date:'Apr 27', text:'PCB v2.0 received' }
+    ]
+  }
+];
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+// S is the single object that holds everything the app needs while running.
+// Any time data changes, we update S and call save() to sync to Supabase,
+// then call render() or rMain() to redraw the screen.
+let S = {
+  sel: 1,              // ID of the currently selected project
+  tab: 'overview',     // Which tab is active: 'overview','bom','firmware','settings','import'
+  showArchived: false, // Whether archived projects are visible at the bottom of the sidebar
+  importTxt: '',       // The text currently typed in the Import tab textarea
+  preview: null,       // Parsed result of the import preview (null if not previewed yet)
+  newBlocker: '',      // Text in the "add blocker" input (preserved across re-renders)
+  showUF: false,       // Whether the "Post update" form is expanded
+  editingUpdateId: null, // ID of the update currently being edited inline
+  ud: { type: 'direction', author: '', text: '' }, // Current state of the post-update form
+  projects: JSON.parse(JSON.stringify(DEFAULT_PROJECTS)) // Deep copy so defaults aren't mutated
+};
+
+// ── PERSISTENCE ────────────────────────────────────────────────────────────
+// save() pushes the entire projects array to Supabase row id=1.
+// It's called automatically any time data changes (checkbox, form submit, etc).
+// The save happens in the background — the UI updates immediately.
+async function save() {
+  try {
+    await sbClient.from('hub_data').upsert({ id: 1, projects: S.projects });
+  } catch(e) { console.error('Save failed:', e); }
+}
+
+// load() fetches the projects array from Supabase when the page first opens.
+// Also handles "migrations" — adding new fields to old saved data so the app
+// doesn't break when we add features like 'archived' or 'sections'.
+async function load() {
+  try {
+    const { data, error } = await sbClient
+      .from('hub_data')
+      .select('projects')
+      .eq('id', 1)
+      .single();
+    if (error) throw error;
+    if (data?.projects?.length) {
+      // Migration: ensure every project has the fields added in newer versions
+      data.projects.forEach(p => {
+        if (!Array.isArray(p.sections)) p.sections = []; // added in v2
+        if (p.archived === undefined)   p.archived = false; // added in v3
+        if (!Array.isArray(p.updates))  p.updates = [];
+        if (!Array.isArray(p.blockers)) p.blockers = [];
+        if (p.summary === undefined)    p.summary = '';
+        // added in v4: isBlocker flag on each update
+        p.updates.forEach(u => { if (u.isBlocker === undefined) u.isBlocker = false; });
+      });
+      S.projects = data.projects;
+      S.sel = S.projects[0].id;
+    }
+  } catch(e) { console.error('Load failed:', e); }
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+// P() returns the currently selected project object (shortcut used everywhere)
+const P   = () => S.projects.find(p => p.id === S.sel);
+// tdy() returns today's date formatted like "Apr 29" for log entries
+const tdy = () => new Date().toLocaleDateString('en-US', { month:'short', day:'numeric' });
+
+// esc() makes text safe to put inside HTML — prevents broken layouts if someone
+// types < > & " in a project name or update text
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+// stag() returns a colored stage badge like [Prototyping] using STAGE_C colors
+function stag(s) {
+  const [bg, tc] = STAGE_C[s] || STAGE_C.Concept;
+  return `<span class="tag" style="background:${bg};color:${tc}">${s}</span>`;
+}
+function mbar(v, c='#3B82F6') {
+  return `<div class="mini-bar"><div class="mini-bar-fill" style="width:${v}%;background:${c}"></div></div>`;
+}
+function pbar(lbl, v, c='#3B82F6') {
+  return `<div class="pbar-wrap">
+    <div class="pbar-lbl"><span>${lbl}</span><strong style="color:${c}">${v}%</strong></div>
+    <div class="pbar-track"><div class="pbar-fill" style="width:${v}%;background:${c}"></div></div>
+  </div>`;
+}
+function parseImport(txt) {
+  const r = {}, acts = [];
+  txt.split('\n').forEach(l => {
+    const m = l.match(/^([A-Za-z\s]+?):\s*(.+)$/);
+    if (!m) return;
+    const k = m[1].trim().toLowerCase(), v = m[2].trim();
+    if (k==='firmware') r.fw = Math.min(100,Math.max(0,parseInt(v)||0));
+    if (k==='hardware') r.hw = Math.min(100,Math.max(0,parseInt(v)||0));
+    if (k==='stage') { const s=STAGES.find(x=>x.toLowerCase()===v.toLowerCase()); if(s) r.stage=s; }
+    if (k==='notes')   r.notes   = v;
+    if (k==='blocker') r.blocker = v;
+    if (k==='activity') acts.push(v);
+  });
+  if (acts.length) r.acts = acts;
+  return r;
+}
+
+// ── SIDEBAR RENDER ─────────────────────────────────────────────────────────
+// Draws the project list in the left sidebar.
+// Active projects show with ▲▼ buttons to change their priority order.
+// Archived projects are hidden unless "Show archived" is toggled on.
+function rSB() {
+  // Split projects into active and archived lists
+  const active   = S.projects.filter(p => !p.archived);
+  const archived = S.projects.filter(p =>  p.archived);
+
+  // Build one sidebar row per active project
+  const activeHtml = active.map((p, idx) => {
+    // Count all open updates and specifically direction ones
+    const openUpdates = p.updates.filter(u => !u.resolved);
+    const dc = openUpdates.filter(u => u.type === 'direction').length;
+    const uc = openUpdates.length; // total open updates count
+    const hasBlocker = openUpdates.some(u => u.isBlocker); // any update flagged as blocker
+    // Find this project's index in the full array for move buttons
+    const fullIdx = S.projects.indexOf(p);
+    // Badge color: red if blocker, amber if needs direction, blue otherwise
+    const badgeBg = hasBlocker ? '#FEE2E2' : dc ? '#FEF3C7' : '#DBEAFE';
+    const badgeTc = hasBlocker ? '#991B1B' : dc ? '#92400E' : '#1E40AF';
+    return `<div class="pj${S.sel===p.id?' on':''}${hasBlocker?' has-blocker':''}" data-pid="${p.id}" style="display:flex;align-items:flex-start;gap:4px">
+      <div style="flex:1;min-width:0">
+        <div class="pj-name">
+          <span>${esc(p.name)}</span>
+          ${uc ? `<span class="badge" style="background:${badgeBg};color:${badgeTc}">${uc}</span>` : ''}
+        </div>
+        ${stag(p.stage)}
+        ${mbar(p.fw)}
+      </div>
+      <!-- Priority arrows: move this project up or down in the list -->
+      <div style="display:flex;flex-direction:column;gap:1px;padding-top:2px;flex-shrink:0">
+        <button data-moveup="${p.id}" title="Move up"
+          style="font-size:9px;padding:1px 5px;border-color:transparent;background:none;color:var(--txt4);line-height:1"
+          ${fullIdx===0?'disabled':''}
+        >▲</button>
+        <button data-movedown="${p.id}" title="Move down"
+          style="font-size:9px;padding:1px 5px;border-color:transparent;background:none;color:var(--txt4);line-height:1"
+          ${fullIdx===S.projects.length-1?'disabled':''}
+        >▼</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Build the archived section at the bottom (only if any exist)
+  let archivedHtml = '';
+  if (archived.length) {
+    archivedHtml = `
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border2)">
+        <button data-togglearchived
+          style="width:100%;text-align:left;font-size:10px;font-family:var(--mono);
+                 color:var(--txt4);background:none;border:none;padding:4px 4px;letter-spacing:0.04em">
+          ${S.showArchived ? '▾' : '▸'} ARCHIVED (${archived.length})
+        </button>
+        ${S.showArchived ? archived.map(p => `
+          <div class="pj${S.sel===p.id?' on':''}" data-pid="${p.id}" style="opacity:0.6">
+            <div class="pj-name" style="display:flex;align-items:center;justify-content:space-between">
+              <span>${esc(p.name)}</span>
+              <!-- Restore button takes project out of archive -->
+              <button data-restore="${p.id}"
+                style="font-size:9px;padding:1px 7px;background:var(--green-lt);
+                       color:var(--green-dk);border-color:#BBF7D0">Restore</button>
+            </div>
+            ${stag(p.stage)}
+          </div>`).join('') : ''}
+      </div>`;
+  }
+
+  document.getElementById('pjl').innerHTML = activeHtml + archivedHtml;
+}
+
+// ── Stage tracker ──────────────────────────────────────────────────────────
+function rStages(p) {
+  const ci = STAGES.indexOf(p.stage);
+  document.getElementById('stage-track-fg').style.width = ci > 0 ? `${ci*20}%` : '0%';
+  document.getElementById('stage-dots').innerHTML = STAGES.map((s,i) => {
+    const dn=i<ci, ac=i===ci;
+    const dc = dn?'#22C55E' : ac?'#3B82F6':'#D1D5DB';
+    const tc = dn?'#15803D' : ac?'#1D4ED8':'#9CA3AF';
+    return `<button class="sg-btn" data-stage="${s}" title="Set to ${s}">
+      <div class="sg-dot" style="background:${dn||ac?dc:'#fff'};border-color:${dc}"></div>
+      <span class="sg-lbl" style="color:${tc}">${s.toLowerCase()}</span>
+    </button>`;
+  }).join('');
+}
+
+// ── UPDATES PANEL ──────────────────────────────────────────────────────────
+// Renders the team updates panel that appears at the top of every tab.
+// Open updates (unresolved) appear first with blocker flag, edit, and delete.
+// Resolved updates appear below — they can also be deleted.
+function rUpdates(p) {
+  const open     = p.updates.filter(u => !u.resolved);
+  const resolved = p.updates.filter(u =>  u.resolved);
+  const dc = open.filter(u => u.type==='direction').length;
+  const bc = open.filter(u => u.isBlocker).length; // active blocker updates
+
+  const panel = document.getElementById('upd-panel');
+  if (!panel) return;
+
+  // Border and header color: red if blockers, amber if needs direction
+  panel.style.borderColor = bc ? '#EF4444' : dc ? '#FCD34D' : '#E5E7EB';
+  const hdrBg = bc ? '#FFF1F2' : dc ? '#FFFBEB' : '#fff';
+
+  // ── Panel header ──
+  let html = `<div class="upd-hdr" style="background:${hdrBg}">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font-size:13px;font-weight:500">Team Updates</span>
+      ${bc ? `<span class="badge" style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px">⚠ ${bc} blocker${bc>1?'s':''}</span>` : ''}
+      ${dc ? `<span class="badge" style="background:#FEF3C7;color:#92400E;font-size:10px;padding:2px 8px">${dc} need${dc>1?'':'s'} direction</span>` : ''}
+      ${open.length&&!dc&&!bc ? `<span style="font-size:11px;color:#9CA3AF;font-family:var(--mono)">${open.length} open</span>` : ''}
+      ${!open.length ? `<span style="font-size:11px;color:#9CA3AF">— all clear</span>` : ''}
+    </div>
+    <button data-toggleuf style="font-size:11px;padding:4px 10px;flex-shrink:0">${S.showUF?'Cancel':'+ Post update'}</button>
+  </div>`;
+
+  // ── Post update form ──
+  if (S.showUF) {
+    html += `<div class="upd-form-wrap">
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <select id="ud-type" style="width:auto;min-width:160px">
+          ${Object.entries(UPD_T).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join('')}
+        </select>
+        <datalist id="tl">${p.team.map(m=>`<option value="${esc(m)}">`).join('')}</datalist>
+        <input type="text" id="ud-auth" list="tl" placeholder="Your name…" style="flex:1;font-family:var(--sans)">
+      </div>
+      <textarea id="ud-txt" style="min-height:64px;margin-bottom:8px;font-family:var(--sans);font-size:13px"
+        placeholder="What does the team need to know, decide, or act on?"></textarea>
+      <button data-postupd class="btn-primary" style="font-size:12px;padding:6px 16px">Post update</button>
+    </div>`;
+  }
+
+  // ── Active (open) updates ──
+  if (open.length) {
+    html += open.map(u => {
+      const t = UPD_T[u.type] || UPD_T.info;
+
+      // ── Inline edit mode ──
+      if (S.editingUpdateId == u.id) {
+        return `<div class="upd-edit-wrap">
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <select data-edittype="${u.id}" style="width:auto;min-width:160px">
+              ${Object.entries(UPD_T).map(([k,v])=>`<option value="${k}"${k===u.type?' selected':''}>${v.l}</option>`).join('')}
+            </select>
+          </div>
+          <textarea data-edittxt="${u.id}" style="min-height:64px;margin-bottom:8px;font-family:var(--sans);font-size:13px">${esc(u.text)}</textarea>
+          <div style="display:flex;gap:8px">
+            <button data-saveedit="${u.id}" class="btn-primary" style="font-size:11px;padding:5px 14px">Save</button>
+            <button data-canceledit style="font-size:11px;padding:5px 14px;color:var(--txt4)">Cancel</button>
+          </div>
+        </div>`;
+      }
+
+      // ── Normal display row ──
+      const rowBg = u.isBlocker ? 'background:#FFF1F2;border-left:3px solid #EF4444;' : '';
+      return `<div class="upd-row" style="${rowBg}">
+        <button data-togblocker="${u.id}"
+          title="${u.isBlocker ? 'Remove blocker flag' : 'Flag as blocker'}"
+          style="font-size:15px;padding:2px 3px;background:none;border:none;
+                 color:${u.isBlocker ? '#EF4444' : '#D1D5DB'};flex-shrink:0;
+                 cursor:pointer;line-height:1;align-self:flex-start;margin-top:1px;
+                 transition:color 0.15s"
+          onmouseover="this.style.color='#EF4444'"
+          onmouseout="this.style.color='${u.isBlocker ? '#EF4444' : '#D1D5DB'}'"
+        >🚩</button>
+        <span class="tag" style="background:${t.bg};color:${t.tc};flex-shrink:0;margin-top:1px">${t.l}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;color:#111827;line-height:1.5;margin-bottom:3px">${esc(u.text)}</div>
+          <div style="font-size:10px;font-family:var(--mono);color:#9CA3AF">
+            ${esc(u.author)} · ${u.date}
+            ${u.isBlocker ? ' · <span style="color:#EF4444;font-weight:600;letter-spacing:0.03em">BLOCKER</span>' : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0;align-self:flex-start;margin-top:1px">
+          <button data-editupdid="${u.id}" style="font-size:11px;color:#6B7280;padding:3px 8px">Edit</button>
+          <button data-resu="${u.id}" style="font-size:11px;color:#6B7280;padding:3px 9px">Resolve</button>
+          <button data-delupdid="${u.id}" class="btn-danger" style="font-size:11px;padding:3px 7px">×</button>
+        </div>
+      </div>`;
+    }).join('');
+  } else if (!S.showUF) {
+    html += `<div style="padding:11px 14px;font-size:11px;color:#9CA3AF;font-family:var(--mono)">No open updates — use "+ Post update" to share with the team</div>`;
+  }
+
+  // ── Completed (resolved) updates ──
+  if (resolved.length) {
+    html += `<div style="padding:7px 14px 5px;font-size:10px;font-family:var(--mono);
+                         color:#15803D;background:#F0FDF4;border-top:1px solid #D1FAE5;
+                         letter-spacing:0.05em;text-transform:uppercase">
+      ✓ Completed · ${resolved.length}
+    </div>`;
+    html += resolved.map(u => {
+      const t = UPD_T[u.type] || UPD_T.info;
+      return `<div class="upd-row" style="background:#F0FDF4;opacity:0.8">
+        <span class="tag" style="background:#D1FAE5;color:#15803D;flex-shrink:0;margin-top:1px">${t.l}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;color:#374151;line-height:1.5;margin-bottom:3px;text-decoration:line-through">${esc(u.text)}</div>
+          <div style="font-size:10px;font-family:var(--mono);color:#9CA3AF">${esc(u.author)} · ${u.date} · Resolved</div>
+        </div>
+        <button data-delupdid="${u.id}" class="btn-danger" style="font-size:11px;padding:3px 7px;flex-shrink:0">×</button>
+      </div>`;
+    }).join('');
+  }
+
+  panel.innerHTML = html;
+
+  const udt = document.getElementById('ud-type');
+  if (udt) { udt.value=S.ud.type; udt.addEventListener('change',e=>{ S.ud.type=e.target.value; }); }
+  const uda = document.getElementById('ud-auth');
+  if (uda) { uda.value=S.ud.author; uda.addEventListener('input',e=>{ S.ud.author=e.target.value; }); }
+  const udx = document.getElementById('ud-txt');
+  if (udx) { udx.value=S.ud.text; udx.addEventListener('input',e=>{ S.ud.text=e.target.value; }); }
+}
+
+// ── Tab: Overview ──────────────────────────────────────────────────────────
+function rOverview(p) {
+  const sectHtml = (p.sections||[]).map(sec => rSection(sec)).join('');
+
+  // Auto-generated summary lines from live project data
+  const openUpd    = p.updates.filter(u => !u.resolved);
+  const blockerUpd = openUpd.filter(u => u.isBlocker);
+  const dirUpd     = openUpd.filter(u => u.type === 'direction');
+  const reqUpd     = openUpd.filter(u => u.type === 'request');
+  const rcvd       = p.bom.filter(b => b.received).length;
+
+  const summaryLines = [];
+  summaryLines.push(`<strong>${esc(p.name)}</strong> is currently in the <strong>${p.stage}</strong> stage.`);
+  summaryLines.push(`Firmware <strong>${p.fw}%</strong> complete &nbsp;·&nbsp; Hardware <strong>${p.hw}%</strong> complete.`);
+  if (p.lead) {
+    const others = p.team.length > 1 ? ` with ${p.team.length - 1} other member${p.team.length > 2 ? 's' : ''}` : '';
+    summaryLines.push(`Led by <strong>${esc(p.lead)}</strong>${others}.`);
+  }
+  if (blockerUpd.length) {
+    summaryLines.push(`<span style="color:#DC2626">⚠ ${blockerUpd.length} active blocker${blockerUpd.length>1?'s':''} need${blockerUpd.length>1?'':'s'} resolution.</span>`);
+  } else if (dirUpd.length) {
+    summaryLines.push(`<span style="color:#92400E">${dirUpd.length} update${dirUpd.length>1?'s':''} need${dirUpd.length>1?'':'s'} direction.</span>`);
+  } else if (reqUpd.length) {
+    summaryLines.push(`<span style="color:#5B21B6">${reqUpd.length} project request${reqUpd.length>1?'s':''} pending.</span>`);
+  } else if (openUpd.length) {
+    summaryLines.push(`${openUpd.length} open team update${openUpd.length>1?'s':''}.`);
+  } else {
+    summaryLines.push(`<span style="color:#15803D">✓ No open team updates — all clear.</span>`);
+  }
+  if (p.bom.length) summaryLines.push(`BOM: <strong>${rcvd}/${p.bom.length}</strong> parts received.`);
+
+  return `
+  <div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,#F8FAFF 0%,#EEF2FF 100%);border-color:#C7D2FE">
+    <div class="card-lbl" style="color:#3730A3;margin-bottom:8px">Project Overview</div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:14px">
+      ${summaryLines.map(l=>`<div style="font-size:13px;color:var(--txt2);line-height:1.6">${l}</div>`).join('')}
+    </div>
+    <label style="font-size:10px;font-family:var(--mono);color:#6366F1;letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:5px">Team notes</label>
+    <textarea id="proj-summary-ta" placeholder="Add context, decisions, or notes for the team…"
+      style="min-height:56px;font-family:var(--sans);font-size:13px;background:rgba(255,255,255,0.75);border-color:#C7D2FE"
+    >${esc(p.summary||'')}</textarea>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-lbl">Team</div>
+      <div style="font-size:11px;color:var(--txt4);margin-bottom:3px">Lead</div>
+      <div style="margin-bottom:12px;font-weight:500">${esc(p.lead)||'—'}</div>
+      <div style="font-size:11px;color:var(--txt4);margin-bottom:6px">Members</div>
+      <div>${p.team.length
+        ? p.team.map(m=>`<span class="chip">${esc(m)}</span>`).join('')
+        : '<span style="color:var(--txt4);font-size:11px">None assigned</span>'}</div>
+    </div>
+    <div class="card">
+      <div class="card-lbl">Progress</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        ${pbar('Firmware',p.fw)}
+        ${pbar('Hardware',p.hw,'#F59E0B')}
+      </div>
+    </div>
+    <div class="card full">
+      <div class="card-lbl">Recent activity</div>
+      ${p.log.length
+        ? p.log.slice(0,8).map(a=>`<div class="act-row"><span class="act-date">${a.date}</span><span style="font-size:12px;color:var(--txt2)">${esc(a.text)}</span></div>`).join('')
+        : '<span style="font-size:11px;color:var(--txt4)">No activity yet</span>'}
+    </div>
+  </div>
+  ${sectHtml}
+  <button class="btn-add-sec" data-opensecmodal>+ Add section</button>`;
+}
+
+// ── Section renders ────────────────────────────────────────────────────────
+function rSection(sec) {
+  const def = SEC_TYPES[sec.type] || { label:sec.type, icon:'📦' };
+  const title = esc(sec.title || def.label);
+  let body = '';
+
+  if (sec.type === 'budget') {
+    const items = sec.data.items || [];
+    const total = items.reduce((s,i)=>s+(parseFloat(i.cost)||0)*(parseInt(i.qty)||1),0);
+    body = `${items.length ? `<table class="sec-tbl">
+      <thead><tr>
+        <th>Item</th><th style="text-align:center">Qty</th>
+        <th style="text-align:right">Unit $</th><th style="text-align:right">Total</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${items.map(i=>`<tr>
+          <td>${esc(i.name)}</td>
+          <td style="text-align:center;font-family:var(--mono)">${i.qty}</td>
+          <td style="text-align:right;font-family:var(--mono)">$${parseFloat(i.cost||0).toFixed(2)}</td>
+          <td style="text-align:right;font-family:var(--mono);font-weight:500">$${((parseFloat(i.cost)||0)*(parseInt(i.qty)||1)).toFixed(2)}</td>
+          <td style="text-align:center"><button class="btn-del" data-delbitem="${sec.id}" data-iid="${i.id}">×</button></td>
+        </tr>`).join('')}
+        <tr><td colspan="3" style="font-size:11px;font-family:var(--mono);color:var(--txt4);padding:7px 10px">Total</td>
+            <td style="text-align:right;font-family:var(--mono);font-weight:600">$${total.toFixed(2)}</td><td></td></tr>
+      </tbody>
+    </table>` : '<p style="font-size:11px;color:var(--txt4);font-family:var(--mono);margin-bottom:12px">No items yet</p>'}
+    <div style="display:grid;grid-template-columns:2fr 70px 100px auto;gap:8px;align-items:center">
+      <input type="text" data-bf-name="${sec.id}" placeholder="Item name…" style="font-family:var(--sans)">
+      <input type="text" data-bf-qty="${sec.id}"  placeholder="Qty" style="text-align:center">
+      <input type="text" data-bf-cost="${sec.id}" placeholder="Unit cost $" style="text-align:right">
+      <button class="btn-primary" data-addbitem="${sec.id}" style="font-size:11px;padding:6px 12px">Add</button>
+    </div>`;
+
+  } else if (sec.type === 'milestones') {
+    const items = sec.data.items || [];
+    body = `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+      ${items.length ? items.map(i=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border)${i.done?';opacity:0.5':''}">
+        <input type="checkbox" ${i.done?'checked':''} data-milcheck="${sec.id}" data-iid="${i.id}">
+        <span style="flex:1;font-size:13px${i.done?';text-decoration:line-through;color:var(--txt4)':''}">${esc(i.text)}</span>
+        <span style="font-size:10px;font-family:var(--mono);color:var(--txt4)">${esc(i.date||'')}</span>
+        <button class="btn-del" data-delmitem="${sec.id}" data-iid="${i.id}">×</button>
+      </div>`).join('') : '<div style="font-size:11px;color:var(--txt4);font-family:var(--mono)">No milestones yet</div>'}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 130px auto;gap:8px;align-items:center">
+      <input type="text" data-mf-text="${sec.id}" placeholder="Milestone description…" style="font-family:var(--sans)">
+      <input type="text" data-mf-date="${sec.id}" placeholder="Due date…" style="font-family:var(--sans)">
+      <button class="btn-primary" data-addmitem="${sec.id}" style="font-size:11px;padding:6px 12px">Add</button>
+    </div>`;
+
+  } else if (sec.type === 'testlog') {
+    const items = sec.data.items || [];
+    body = `${items.length ? `<table class="sec-tbl" style="margin-bottom:12px">
+      <thead><tr><th>Date</th><th>Test</th><th>Result</th><th>Notes</th><th></th></tr></thead>
+      <tbody>${items.map(i=>{
+        const rc=i.result==='pass'?'#15803D':i.result==='fail'?'#991B1B':'#92400E';
+        const rb=i.result==='pass'?'#DCFCE7':i.result==='fail'?'#FEE2E2':'#FEF3C7';
+        return `<tr>
+          <td style="font-family:var(--mono);color:var(--txt4);white-space:nowrap">${esc(i.date)}</td>
+          <td style="font-weight:500">${esc(i.test)}</td>
+          <td><span class="tag" style="background:${rb};color:${rc}">${esc(i.result)}</span></td>
+          <td style="color:var(--txt4)">${esc(i.notes||'—')}</td>
+          <td style="text-align:center"><button class="btn-del" data-deltitem="${sec.id}" data-iid="${i.id}">×</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>` : '<p style="font-size:11px;color:var(--txt4);font-family:var(--mono);margin-bottom:12px">No results logged yet</p>'}
+    <div style="display:grid;grid-template-columns:90px 1fr 110px 1fr auto;gap:8px;align-items:center">
+      <input type="text" data-tf-date="${sec.id}"   placeholder="Date…" style="font-family:var(--sans)">
+      <input type="text" data-tf-test="${sec.id}"   placeholder="Test name…" style="font-family:var(--sans)">
+      <select data-tf-result="${sec.id}">
+        <option value="pass">Pass</option>
+        <option value="fail">Fail</option>
+        <option value="partial">Partial</option>
+      </select>
+      <input type="text" data-tf-notes="${sec.id}"  placeholder="Notes…" style="font-family:var(--sans)">
+      <button class="btn-primary" data-addtitem="${sec.id}" style="font-size:11px;padding:6px 10px">Log</button>
+    </div>`;
+
+  } else if (sec.type === 'links') {
+    const items = sec.data.items || [];
+    body = `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+      ${items.length ? items.map(i=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border)">
+        <a href="${esc(i.url)}" target="_blank" style="flex:1;font-size:13px;color:var(--blue);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(i.label||i.url)}</a>
+        <button class="btn-del" data-dellitem="${sec.id}" data-iid="${i.id}" style="flex-shrink:0">×</button>
+      </div>`).join('') : '<div style="font-size:11px;color:var(--txt4);font-family:var(--mono)">No links yet</div>'}
+    </div>
+    <div style="display:grid;grid-template-columns:160px 1fr auto;gap:8px;align-items:center">
+      <input type="text" data-lf-label="${sec.id}" placeholder="Label…" style="font-family:var(--sans)">
+      <input type="text" data-lf-url="${sec.id}"   placeholder="https://…" style="font-family:var(--mono);font-size:11px">
+      <button class="btn-primary" data-addlitem="${sec.id}" style="font-size:11px;padding:6px 12px">Add</button>
+    </div>`;
+
+  } else if (sec.type === 'custom') {
+    body = `<textarea data-customta="${sec.id}" style="min-height:100px;font-family:var(--sans);font-size:13px" placeholder="Notes, observations, anything…"></textarea>`;
+  }
+
+  return `<div class="sec-card">
+    <div class="sec-card-hdr">
+      <span style="font-size:13px;font-weight:500">${def.icon} ${title}</span>
+      <button data-removesec="${sec.id}" style="font-size:11px;padding:3px 9px;color:var(--txt4)">Remove</button>
+    </div>
+    <div class="sec-card-body">${body}</div>
+  </div>`;
+}
+
+// ── Tab: BOM ───────────────────────────────────────────────────────────────
+function rBOM(p) {
+  const rcvd = p.bom.filter(b=>b.received).length;
+  const pct  = p.bom.length ? Math.round(rcvd/p.bom.length*100) : 0;
+  return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <span style="font-size:10px;font-family:var(--mono);color:var(--txt4)">${rcvd}/${p.bom.length} received</span>
+    <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:#3B82F6;border-radius:3px"></div>
+    </div>
+    <span style="font-size:10px;font-family:var(--mono);color:#3B82F6;min-width:28px;text-align:right">${pct}%</span>
+  </div>
+  <div class="bom-wrap">
+    <table>
+      <thead><tr>
+        <th style="text-align:left">Part</th>
+        <th style="text-align:center">Qty</th>
+        <th style="text-align:center">Have</th>
+        <th style="text-align:center">Ordered</th>
+        <th style="text-align:center">Received</th>
+        <th style="text-align:left">Notes</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+        ${p.bom.length
+          ? p.bom.map(b=>`<tr>
+              <td style="font-weight:500;color:var(--txt1)">${esc(b.part)}</td>
+              <td style="text-align:center;font-family:var(--mono)">${b.qty}</td>
+              ${['have','ordered','received'].map(f=>`<td style="text-align:center"><input type="checkbox" ${b[f]?'checked':''} data-bid="${b.id}" data-field="${f}"></td>`).join('')}
+              <td style="color:var(--txt4)">${esc(b.notes)||'—'}</td>
+              <td style="text-align:center"><button class="btn-del" data-delbom="${b.id}">×</button></td>
+            </tr>`).join('')
+          : `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--txt4)">No parts added yet</td></tr>`}
+      </tbody>
+    </table>
+  </div>
+  <div class="card" style="margin-top:4px">
+    <div class="card-lbl">Add part</div>
+    <div style="display:grid;grid-template-columns:2fr 70px 1fr;gap:8px;margin-bottom:8px">
+      <input type="text" id="bom-part"  placeholder="Part name…" style="font-family:var(--sans)">
+      <input type="text" id="bom-qty"   placeholder="Qty" style="text-align:center">
+      <input type="text" id="bom-notes" placeholder="Notes…" style="font-family:var(--sans)">
+    </div>
+    <button data-addbom class="btn-primary" style="font-size:12px;padding:6px 16px">Add to BOM</button>
+  </div>`;
+}
+
+// ── Tab: Firmware ──────────────────────────────────────────────────────────
+function rFirmware(p) {
+  return `<div class="card">
+    <div class="card-lbl">Progress controls</div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div>
+        <div class="pbar-wrap">
+          <div class="pbar-lbl">
+            <span>Firmware</span>
+            <strong id="fw-lbl" style="color:#3B82F6">${p.fw}%</strong>
+          </div>
+          <div class="pbar-track">
+            <div class="pbar-fill" id="fw-bar" style="width:${p.fw}%;background:#3B82F6"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px;align-items:center">
+          ${[0,25,50,75,100].map(v=>`<button style="font-size:10px;padding:3px 8px" data-fwset="${v}">${v}%</button>`).join('')}
+          <input type="range" min="0" max="100" value="${p.fw}" id="fw-slider" data-fwslider="1" style="flex:1;margin-left:6px">
+        </div>
+      </div>
+      <div>
+        <div class="pbar-wrap">
+          <div class="pbar-lbl">
+            <span>Hardware</span>
+            <strong id="hw-lbl" style="color:#F59E0B">${p.hw}%</strong>
+          </div>
+          <div class="pbar-track">
+            <div class="pbar-fill" id="hw-bar" style="width:${p.hw}%;background:#F59E0B"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px;align-items:center">
+          ${[0,25,50,75,100].map(v=>`<button style="font-size:10px;padding:3px 8px" data-hwset="${v}">${v}%</button>`).join('')}
+          <input type="range" min="0" max="100" value="${p.hw}" id="hw-slider" data-hwslider="1" style="flex:1;margin-left:6px">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-lbl">Bench test notes</div>
+    <textarea id="notes-ta" style="min-height:130px" placeholder="Observations, results, workarounds…"></textarea>
+  </div>`;
+}
+
+// ── Tab: Blockers ──────────────────────────────────────────────────────────
+function rBlockers(p) {
+  const op = p.blockers.filter(b=>!b.done);
+  const dn = p.blockers.filter(b=> b.done);
+  return `<div class="card">
+    <div class="card-lbl">Add blocker</div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="blk-inp" placeholder="Describe the blocker…" style="font-family:var(--sans);font-size:13px">
+      <button data-addblocker style="padding:6px 16px">Add</button>
+    </div>
+  </div>
+  ${op.length ? `<div class="card">
+    <div class="card-lbl">Open · ${op.length}</div>
+    ${op.map(b=>`<div class="blk-row"><input type="checkbox" data-btog="${b.id}" style="margin-top:1px"><span style="flex:1;font-size:13px">${esc(b.text)}</span></div>`).join('')}
+  </div>` : ''}
+  ${dn.length ? `<div class="card">
+    <div class="card-lbl">Resolved · ${dn.length}</div>
+    ${dn.map(b=>`<div class="blk-row done"><input type="checkbox" checked data-btog="${b.id}" style="margin-top:1px"><span style="flex:1;font-size:13px">${esc(b.text)}</span></div>`).join('')}
+  </div>` : ''}
+  ${!p.blockers.length ? `<div class="empty">No blockers — clear to build</div>` : ''}`;
+}
+
+// ── Tab: Settings ──────────────────────────────────────────────────────────
+function rSettings(p) {
+  return `<div class="card">
+    <div class="card-lbl">Project info</div>
+    <div class="s-field">
+      <label class="s-label">Project name</label>
+      <input type="text" id="s-name" value="${esc(p.name)}" style="font-family:var(--sans);font-size:13px">
+    </div>
+    <div class="s-field">
+      <label class="s-label">Description</label>
+      <input type="text" id="s-desc" value="${esc(p.desc)}" style="font-family:var(--sans);font-size:13px">
+    </div>
+    <div class="s-field">
+      <label class="s-label">Project lead</label>
+      <input type="text" id="s-lead" value="${esc(p.lead)}" style="font-family:var(--sans);font-size:13px">
+    </div>
+    <div class="s-field" style="margin-bottom:0">
+      <label class="s-label">SharePoint URL</label>
+      <input type="text" id="s-sp" value="${esc(p.sp)}" style="font-family:var(--mono);font-size:12px">
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-lbl">Team members</div>
+    <div style="margin-bottom:12px;min-height:28px" id="s-team-list">
+      ${p.team.length
+        ? p.team.map(m=>`<span class="chip">${esc(m)}<button class="chip-x" data-removemember="${esc(m)}" title="Remove">×</button></span>`).join('')
+        : '<span style="font-size:11px;color:var(--txt4)">No members yet — add one below</span>'}
+    </div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="s-member" placeholder="Member name…" style="font-family:var(--sans);font-size:13px">
+      <button data-addmember style="padding:6px 14px">Add</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button data-savesettings class="btn-primary" style="padding:9px 28px;font-size:13px">Save changes</button>
+    <!-- Archive hides the project from the main list without deleting it (reversible) -->
+    <button data-archiveproject class="btn-warn" style="padding:9px 18px;font-size:13px">${p.archived ? '↩ Restore project' : '📦 Archive project'}</button>
+    <button data-deleteproject class="btn-danger" style="padding:9px 18px;font-size:13px">Delete project</button>
+  </div>`;
+}
+
+// ── Tab: Import ────────────────────────────────────────────────────────────
+function rImport() {
+  const pr = S.preview;
+  return `<div class="card">
+    <div class="card-lbl">Supported fields</div>
+    <div class="code-block">
+      ${[
+        ['STAGE:',    'Concept / Design / Prototyping / Testing / Complete'],
+        ['FIRMWARE:', '0–100 (percent complete)'],
+        ['HARDWARE:', '0–100 (percent complete)'],
+        ['NOTES:',    'Bench test observations or summary'],
+        ['BLOCKER:',  'A new blocker to add'],
+        ['ACTIVITY:', 'Activity log entry — repeat this line for multiple entries']
+      ].map(([k,v])=>`<div><span class="code-key">${k}</span><span class="code-val">${v}</span></div>`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-lbl">Paste Claude update</div>
+    <textarea id="imp-ta" style="min-height:140px;margin-bottom:10px"
+      placeholder="STAGE: Testing&#10;FIRMWARE: 75&#10;HARDWARE: 90&#10;NOTES: Power draw stable at 220mA&#10;BLOCKER: Thermal pad needs review&#10;ACTIVITY: Power consumption test passed"></textarea>
+    <div style="display:flex;gap:8px">
+      <button data-previmport>Preview</button>
+      ${pr ? `<button data-applyimport class="btn-primary">Apply to project</button>` : ''}
+    </div>
+  </div>
+  ${pr ? `<div class="card">
+    <div class="card-lbl">Preview</div>
+    <div class="code-block" style="display:flex;flex-direction:column;gap:7px">
+      ${pr.stage ? `<div><span class="code-key">stage</span><span>${pr.stage}</span></div>` : ''}
+      ${pr.fw!==undefined ? `<div><span class="code-key">firmware</span><span style="color:#3B82F6">${pr.fw}%</span></div>` : ''}
+      ${pr.hw!==undefined ? `<div><span class="code-key">hardware</span><span style="color:#F59E0B">${pr.hw}%</span></div>` : ''}
+      ${pr.notes ? `<div><span class="code-key">notes</span><span>${esc(pr.notes)}</span></div>` : ''}
+      ${pr.blocker ? `<div><span class="code-key">blocker</span><span style="color:#EF4444">${esc(pr.blocker)}</span></div>` : ''}
+      ${(pr.acts||[]).map((a,i)=>`<div><span class="code-key">${i===0?'activity':''}</span><span>${esc(a)}</span></div>`).join('')}
+      ${!Object.keys(pr).length ? `<span style="color:#EF4444">No recognized fields found</span>` : ''}
+    </div>
+  </div>` : ''}`;
+}
+
+// ── Main render ────────────────────────────────────────────────────────────
+function rMain() {
+  const p = P();
+  const hdr  = document.getElementById('proj-hdr');
+  const body = document.getElementById('proj-body');
+  if (!p) {
+    hdr.innerHTML  = '';
+    body.innerHTML = `<div class="empty">Select a project from the sidebar</div>`;
+    return;
+  }
+  hdr.innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
+          <h1 style="font-size:18px;font-weight:600;letter-spacing:-0.01em">${esc(p.name)}</h1>
+          ${stag(p.stage)}
+        </div>
+        <div style="font-size:12px;color:var(--txt4)">${esc(p.desc)||'No description'} &nbsp;·&nbsp; Lead: <span style="color:var(--txt2)">${esc(p.lead)||'Unassigned'}</span></div>
+      </div>
+      <a href="${esc(p.sp)}" target="_blank"
+         style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);
+                color:var(--txt3);text-decoration:none;background:var(--surface2);
+                border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px;flex-shrink:0;transition:all .15s"
+         onmouseover="this.style.borderColor='#3B82F6';this.style.color='#3B82F6'"
+         onmouseout="this.style.borderColor='';this.style.color=''">
+        SharePoint files
+      </a>
+    </div>
+    <div id="stage-wrap">
+      <div id="stage-track-bg"></div>
+      <div id="stage-track-fg"></div>
+      <div id="stage-dots"></div>
+    </div>
+    <div class="tabs">
+      ${[
+        ['overview','Overview'],
+        ['bom','BOM'],
+        ['firmware','Firmware'],
+        ['settings','⚙ Settings'],
+        ['import','Import']
+      ].map(([t,l])=>`<button class="tb${S.tab===t?' on':''}" data-tab="${t}" style="background:none;border:none;border-radius:0">${l}</button>`).join('')}
+    </div>`;
+
+  body.innerHTML = `<div id="upd-panel"></div><div id="tab-content"></div>`;
+  rStages(p);
+  rUpdates(p);
+
+  const tc = document.getElementById('tab-content');
+  switch (S.tab) {
+    case 'overview':  tc.innerHTML = rOverview(p);  break;
+    case 'bom':       tc.innerHTML = rBOM(p);        break;
+    case 'firmware':  tc.innerHTML = rFirmware(p);   break;
+    case 'settings':  tc.innerHTML = rSettings(p);   break;
+    case 'import':    tc.innerHTML = rImport();       break;
+  }
+
+  // Post-render wiring
+  const nta = document.getElementById('notes-ta');
+  if (nta) { nta.value=p.notes; nta.addEventListener('blur',e=>{ P().notes=e.target.value; save(); }); }
+  const ita = document.getElementById('imp-ta');
+  if (ita) { ita.value=S.importTxt; ita.addEventListener('input',e=>{ S.importTxt=e.target.value; }); }
+  const sm = document.getElementById('s-member');
+  if (sm) sm.addEventListener('keydown', e=>{ if(e.key==='Enter') doAddMember(); });
+  const bp = document.getElementById('bom-part');
+  if (bp) bp.addEventListener('keydown', e=>{ if(e.key==='Enter') doAddBOM(); });
+
+  // Overview summary textarea live-save
+  const sumta = document.getElementById('proj-summary-ta');
+  if (sumta) {
+    sumta.addEventListener('blur', e => { P().summary = e.target.value; save(); });
+  }
+
+  // ── Slider live-update wiring (input = live display, change = save) ──
+  const fwSlider = document.getElementById('fw-slider');
+  if (fwSlider) {
+    fwSlider.addEventListener('input', e => {
+      const val = parseInt(e.target.value);
+      const bar = document.getElementById('fw-bar');
+      const lbl = document.getElementById('fw-lbl');
+      if (bar) bar.style.width = val + '%';
+      if (lbl) lbl.textContent = val + '%';
+      P().fw = val;
+    });
+    fwSlider.addEventListener('change', () => { save(); rSB(); });
+  }
+  const hwSlider = document.getElementById('hw-slider');
+  if (hwSlider) {
+    hwSlider.addEventListener('input', e => {
+      const val = parseInt(e.target.value);
+      const bar = document.getElementById('hw-bar');
+      const lbl = document.getElementById('hw-lbl');
+      if (bar) bar.style.width = val + '%';
+      if (lbl) lbl.textContent = val + '%';
+      P().hw = val;
+    });
+    hwSlider.addEventListener('change', () => { save(); rSB(); });
+  }
+
+  // Custom textarea live-save
+  document.querySelectorAll('[data-customta]').forEach(el => {
+    const sec = (P().sections||[]).find(s=>s.id==el.dataset.customta);
+    if (sec) el.value = sec.data.body || '';
+    el.addEventListener('input', e=>{
+      const s2 = (P().sections||[]).find(s=>s.id==e.target.dataset.customta);
+      if (s2) { s2.data.body=e.target.value; save(); }
+    });
+  });
+}
+
+function render() { rSB(); rMain(); }
+
+// ── Sidebar events ─────────────────────────────────────────────────────────
+// Note: move/archive/restore handlers must come BEFORE the [data-pid] handler
+// because those buttons are nested inside .pj[data-pid] elements and would
+// otherwise trigger a project selection as well.
+document.getElementById('sb').addEventListener('click', e => {
+  // ▲ Move project up in priority order
+  const mu = e.target.closest('[data-moveup]');
+  if (mu) { e.stopPropagation(); doMoveProject(parseInt(mu.dataset.moveup), -1); return; }
+
+  // ▼ Move project down in priority order
+  const md = e.target.closest('[data-movedown]');
+  if (md) { e.stopPropagation(); doMoveProject(parseInt(md.dataset.movedown), 1); return; }
+
+  // Toggle "Show archived" section visibility
+  if (e.target.closest('[data-togglearchived]')) {
+    e.stopPropagation(); S.showArchived=!S.showArchived; rSB(); return;
+  }
+
+  // Restore an archived project back to active
+  const rs = e.target.closest('[data-restore]');
+  if (rs) { e.stopPropagation(); doRestoreProject(parseInt(rs.dataset.restore)); return; }
+
+  // Select a project (switch main panel to it)
+  const pj = e.target.closest('[data-pid]');
+  if (pj) { S.sel=parseInt(pj.dataset.pid); S.tab='overview'; S.preview=null; S.showUF=false; render(); }
+});
+document.getElementById('np-btn').addEventListener('click', () => {
+  document.getElementById('np-btn').style.display='none';
+  document.getElementById('np-form').style.display='block';
+  document.getElementById('np-inp').focus();
+});
+document.getElementById('np-x').addEventListener('click', () => {
+  document.getElementById('np-btn').style.display='';
+  document.getElementById('np-form').style.display='none';
+  document.getElementById('np-inp').value='';
+});
+document.getElementById('np-ok').addEventListener('click', () => {
+  const name = document.getElementById('np-inp').value.trim();
+  if (!name) return;
+  const id = Date.now();
+  S.projects.push({ id, name, stage:'Concept', desc:'', lead:'', team:[], fw:0, hw:0,
+    sp:'https://sharepoint.com', archived:false, sections:[], updates:[], bom:[], blockers:[], notes:'', summary:'',
+    log:[{ date:tdy(), text:'Project created' }] });
+  S.sel=id; S.tab='settings'; S.preview=null; S.showUF=false;
+  document.getElementById('np-btn').style.display='';
+  document.getElementById('np-form').style.display='none';
+  document.getElementById('np-inp').value='';
+  save(); render();
+});
+
+// ── Main click events ──────────────────────────────────────────────────────
+document.getElementById('mn').addEventListener('click', e => {
+  const tb = e.target.closest('[data-tab]');
+  if (tb) { S.tab=tb.dataset.tab; S.preview=null; render(); return; }
+
+  const sg = e.target.closest('[data-stage]');
+  if (sg) { P().stage=sg.dataset.stage; save(); render(); return; }
+
+  const fwb = e.target.closest('[data-fwset]');
+  if (fwb) { P().fw=parseInt(fwb.dataset.fwset); save(); rMain(); return; }
+  const hwb = e.target.closest('[data-hwset]');
+  if (hwb) { P().hw=parseInt(hwb.dataset.hwset); save(); rMain(); return; }
+
+  if (e.target.closest('[data-addblocker]')) { doAddBlocker(); return; }
+  if (e.target.closest('[data-toggleuf]'))   { S.showUF=!S.showUF; rUpdates(P()); return; }
+  if (e.target.closest('[data-postupd]'))    { doPostUpdate(); return; }
+
+  const ru = e.target.closest('[data-resu]');
+  if (ru) { doResolveUpdate(ru.dataset.resu); return; }
+
+  // Update: toggle blocker flag
+  const tgb = e.target.closest('[data-togblocker]');
+  if (tgb) { doToggleBlocker(tgb.dataset.togblocker); return; }
+
+  // Update: delete
+  const delu = e.target.closest('[data-delupdid]');
+  if (delu) { doDeleteUpdate(delu.dataset.delupdid); return; }
+
+  // Update: enter edit mode
+  const editu = e.target.closest('[data-editupdid]');
+  if (editu) { S.editingUpdateId = parseInt(editu.dataset.editupdid); rUpdates(P()); return; }
+
+  // Update: save edit
+  const saveedit = e.target.closest('[data-saveedit]');
+  if (saveedit) { doSaveEditUpdate(saveedit.dataset.saveedit); return; }
+
+  // Update: cancel edit
+  if (e.target.closest('[data-canceledit]')) { S.editingUpdateId = null; rUpdates(P()); return; }
+
+  if (e.target.closest('[data-previmport]')) {
+    S.importTxt = document.getElementById('imp-ta')?.value || S.importTxt;
+    S.preview = parseImport(S.importTxt);
+    rMain(); return;
+  }
+  if (e.target.closest('[data-applyimport]')) { doApplyImport(); return; }
+
+  // Settings
+  if (e.target.closest('[data-savesettings]'))  { doSaveSettings(); return; }
+  if (e.target.closest('[data-archiveproject]')) { doArchiveProject(); return; }
+  if (e.target.closest('[data-addmember]'))    { doAddMember(); return; }
+  const rm = e.target.closest('[data-removemember]');
+  if (rm) { doRemoveMember(rm.dataset.removemember); return; }
+  if (e.target.closest('[data-deleteproject]')) {
+    document.getElementById('del-modal-sub').textContent = `"${P().name}" and all its data will be permanently removed.`;
+    document.getElementById('del-modal').style.display='flex'; return;
+  }
+  if (e.target.closest('[data-confirmdelete]')) { doDeleteProject(); return; }
+  if (e.target.closest('[data-canceldelete]'))  { document.getElementById('del-modal').style.display='none'; return; }
+
+  // BOM
+  if (e.target.closest('[data-addbom]')) { doAddBOM(); return; }
+  const db = e.target.closest('[data-delbom]');
+  if (db) { doDeleteBOM(db.dataset.delbom); return; }
+
+  // Sections
+  if (e.target.closest('[data-opensecmodal]')) { openSecModal(); return; }
+  if (e.target.closest('[data-closesecmodal]')) { document.getElementById('sec-modal').style.display='none'; return; }
+  const ps = e.target.closest('[data-picksection]');
+  if (ps) { doAddSection(ps.dataset.picksection); return; }
+  const rss = e.target.closest('[data-removesec]');
+  if (rss) { doRemoveSection(rss.dataset.removesec); return; }
+
+  // Section items
+  const abi = e.target.closest('[data-addbitem]');   if (abi) { doAddBudgetItem(abi.dataset.addbitem); return; }
+  const dbi = e.target.closest('[data-delbitem]');   if (dbi) { doDelSecItem(dbi.dataset.delbitem, dbi.dataset.iid); return; }
+  const ami = e.target.closest('[data-addmitem]');   if (ami) { doAddMilestone(ami.dataset.addmitem); return; }
+  const dmi = e.target.closest('[data-delmitem]');   if (dmi) { doDelSecItem(dmi.dataset.delmitem, dmi.dataset.iid); return; }
+  const ati = e.target.closest('[data-addtitem]');   if (ati) { doAddTestItem(ati.dataset.addtitem); return; }
+  const dti = e.target.closest('[data-deltitem]');   if (dti) { doDelSecItem(dti.dataset.deltitem, dti.dataset.iid); return; }
+  const ali = e.target.closest('[data-addlitem]');   if (ali) { doAddLinkItem(ali.dataset.addlitem); return; }
+  const dli = e.target.closest('[data-dellitem]');   if (dli) { doDelSecItem(dli.dataset.dellitem, dli.dataset.iid); return; }
+});
+
+// ── Main change events ─────────────────────────────────────────────────────
+document.getElementById('mn').addEventListener('change', e => {
+  if (e.target.dataset.bid) {
+    const b = P().bom.find(x=>x.id==e.target.dataset.bid);
+    if (b) { b[e.target.dataset.field]=e.target.checked; save(); rMain(); }
+    return;
+  }
+  if (e.target.dataset.btog) {
+    const b = P().blockers.find(x=>x.id==e.target.dataset.btog);
+    if (b) { b.done=!b.done; save(); rMain(); }
+    return;
+  }
+  // fw/hw sliders are wired directly in rMain() post-render for live updates
+  if (e.target.dataset.milcheck) {
+    const sec = (P().sections||[]).find(s=>s.id==e.target.dataset.milcheck);
+    if (sec) {
+      const item = sec.data.items.find(i=>i.id==e.target.dataset.iid);
+      if (item) { item.done=e.target.checked; save(); rMain(); }
+    }
+    return;
+  }
+});
+
+// ── Modal click-outside to close ───────────────────────────────────────────
+document.getElementById('sec-modal').addEventListener('click', e=>{
+  if (e.target===document.getElementById('sec-modal')) document.getElementById('sec-modal').style.display='none';
+});
+document.getElementById('del-modal').addEventListener('click', e=>{
+  if (e.target===document.getElementById('del-modal')) document.getElementById('del-modal').style.display='none';
+});
+
+// ── Actions ────────────────────────────────────────────────────────────────
+function doAddBlocker() {
+  const val = (S.newBlocker||document.getElementById('blk-inp')?.value||'').trim();
+  if (!val) return;
+  P().blockers.unshift({ id:Date.now(), text:val, done:false });
+  P().log.unshift({ date:tdy(), text:`Blocker added: "${val.slice(0,40)}"` });
+  S.newBlocker='';
+  save(); render();
+}
+
+function doPostUpdate() {
+  const type   = document.getElementById('ud-type')?.value || S.ud.type;
+  const author = (document.getElementById('ud-auth')?.value||S.ud.author||'').trim()||'Team';
+  const text   = (document.getElementById('ud-txt')?.value ||S.ud.text ||'').trim();
+  if (!text) return;
+  P().updates.unshift({ id:Date.now(), author, date:tdy(), type, text, resolved:false });
+  P().log.unshift({ date:tdy(), text:`${UPD_T[type]?.l||'Update'} posted by ${author}` });
+  S.showUF=false; S.ud={ type:'direction', author:'', text:'' };
+  save(); render();
+}
+
+function doResolveUpdate(id) {
+  const u = P().updates.find(x=>x.id==id);
+  if (u) { u.resolved=true; P().log.unshift({ date:tdy(), text:'Update resolved' }); }
+  save(); render();
+}
+
+function doApplyImport() {
+  if (!S.preview) return;
+  const p=P(), pr=S.preview, d=tdy();
+  if (pr.stage) p.stage=pr.stage;
+  if (pr.fw!==undefined) p.fw=pr.fw;
+  if (pr.hw!==undefined) p.hw=pr.hw;
+  if (pr.notes) p.notes=pr.notes;
+  if (pr.blocker) p.blockers.unshift({ id:Date.now(), text:pr.blocker, done:false });
+  if (pr.acts?.length) p.log=[...pr.acts.map(t=>({ date:d, text:t })),...p.log];
+  S.importTxt=''; S.preview=null; S.tab='overview';
+  save(); render();
+}
+
+function doSaveSettings() {
+  const p=P();
+  const name  = document.getElementById('s-name')?.value.trim();
+  const desc  = document.getElementById('s-desc')?.value.trim();
+  const lead  = document.getElementById('s-lead')?.value.trim();
+  const sp    = document.getElementById('s-sp')?.value.trim();
+  if (name !== undefined && name !== '') p.name = name;
+  if (desc !== undefined) p.desc = desc;
+  if (lead !== undefined) p.lead = lead;
+  if (sp   !== undefined) p.sp   = sp;
+  p.log.unshift({ date:tdy(), text:'Project settings updated' });
+  save(); render();
+}
+
+function doAddMember() {
+  const inp = document.getElementById('s-member');
+  const val = inp?.value.trim();
+  if (!val) return;
+  const p = P();
+  if (!p.team.includes(val)) {
+    p.team.push(val);
+    p.log.unshift({ date:tdy(), text:`${val} added to team` });
+    save();
+  }
+  if (inp) inp.value='';
+  rMain();
+}
+
+function doRemoveMember(name) {
+  const p=P();
+  p.team=p.team.filter(m=>m!==name);
+  p.log.unshift({ date:tdy(), text:`${name} removed from team` });
+  save(); rMain();
+}
+
+function doDeleteProject() {
+  document.getElementById('del-modal').style.display='none';
+  S.projects=S.projects.filter(p=>p.id!==S.sel);
+  S.sel=S.projects.length ? S.projects[0].id : null;
+  S.tab='overview';
+  save(); render();
+}
+
+function doAddBOM() {
+  const part  = document.getElementById('bom-part')?.value.trim();
+  const qty   = parseInt(document.getElementById('bom-qty')?.value)||1;
+  const notes = document.getElementById('bom-notes')?.value.trim()||'';
+  if (!part) return;
+  P().bom.push({ id:Date.now(), part, qty, have:false, ordered:false, received:false, notes });
+  P().log.unshift({ date:tdy(), text:`BOM: added ${part}` });
+  save(); rMain();
+}
+
+function doDeleteBOM(id) {
+  const p=P();
+  const item=p.bom.find(b=>b.id==id);
+  if (item) {
+    p.bom=p.bom.filter(b=>b.id!=id);
+    p.log.unshift({ date:tdy(), text:`BOM: removed ${item.part}` });
+    save(); rMain();
+  }
+}
+
+function openSecModal() {
+  document.getElementById('sec-pick-grid').innerHTML = Object.entries(SEC_TYPES).map(([type,def])=>`
+    <button class="sec-pick-opt" data-picksection="${type}">
+      <span class="sec-pick-icon">${def.icon}</span>
+      <span class="sec-pick-lbl">${def.label}</span>
+      <span class="sec-pick-desc">${def.desc}</span>
+    </button>`).join('');
+  document.getElementById('sec-modal').style.display='flex';
+}
+
+function doAddSection(type) {
+  document.getElementById('sec-modal').style.display='none';
+  const p=P(); if (!p.sections) p.sections=[];
+  const def=SEC_TYPES[type];
+  let data={};
+  if (type==='budget'||type==='milestones'||type==='testlog'||type==='links') data={items:[]};
+  if (type==='custom') data={body:''};
+  p.sections.push({ id:Date.now(), type, title:def?.label||type, data });
+  p.log.unshift({ date:tdy(), text:`Section added: ${def?.label||type}` });
+  save(); render();
+}
+
+function doRemoveSection(id) {
+  const p=P();
+  p.sections=(p.sections||[]).filter(s=>s.id!=id);
+  save(); render();
+}
+
+function doDelSecItem(secId, itemId) {
+  const sec=(P().sections||[]).find(s=>s.id==secId);
+  if (sec?.data?.items) { sec.data.items=sec.data.items.filter(i=>i.id!=itemId); save(); rMain(); }
+}
+
+function doAddBudgetItem(secId) {
+  const sec=(P().sections||[]).find(s=>s.id==secId); if (!sec) return;
+  const name=document.querySelector(`[data-bf-name="${secId}"]`)?.value.trim();
+  const qty =parseInt(document.querySelector(`[data-bf-qty="${secId}"]`)?.value)||1;
+  const cost=parseFloat(document.querySelector(`[data-bf-cost="${secId}"]`)?.value)||0;
+  if (!name) return;
+  sec.data.items.push({ id:Date.now(), name, qty, cost });
+  save(); rMain();
+}
+
+function doAddMilestone(secId) {
+  const sec=(P().sections||[]).find(s=>s.id==secId); if (!sec) return;
+  const text=document.querySelector(`[data-mf-text="${secId}"]`)?.value.trim();
+  const date=document.querySelector(`[data-mf-date="${secId}"]`)?.value.trim()||'';
+  if (!text) return;
+  sec.data.items.push({ id:Date.now(), text, date, done:false });
+  save(); rMain();
+}
+
+function doAddTestItem(secId) {
+  const sec=(P().sections||[]).find(s=>s.id==secId); if (!sec) return;
+  const date  =document.querySelector(`[data-tf-date="${secId}"]`)?.value.trim()||tdy();
+  const test  =document.querySelector(`[data-tf-test="${secId}"]`)?.value.trim();
+  const result=document.querySelector(`[data-tf-result="${secId}"]`)?.value||'pass';
+  const notes =document.querySelector(`[data-tf-notes="${secId}"]`)?.value.trim()||'';
+  if (!test) return;
+  sec.data.items.push({ id:Date.now(), date, test, result, notes });
+  P().log.unshift({ date:tdy(), text:`Test: ${test} — ${result}` });
+  save(); rMain();
+}
+
+function doAddLinkItem(secId) {
+  const sec=(P().sections||[]).find(s=>s.id==secId); if (!sec) return;
+  const label=document.querySelector(`[data-lf-label="${secId}"]`)?.value.trim();
+  const url  =document.querySelector(`[data-lf-url="${secId}"]`)?.value.trim();
+  if (!url) return;
+  sec.data.items.push({ id:Date.now(), label:label||url, url });
+  save(); rMain();
+}
+
+// ── doToggleBlocker(id) ────────────────────────────────────────────────────
+// Toggles the isBlocker flag on an update. When true, the sidebar card for
+// that project will flash red until the update is resolved or the flag cleared.
+function doToggleBlocker(id) {
+  const u = P().updates.find(x => x.id == id);
+  if (!u) return;
+  u.isBlocker = !u.isBlocker;
+  P().log.unshift({ date:tdy(), text: u.isBlocker ? 'Update flagged as blocker' : 'Blocker flag removed' });
+  save(); render();
+}
+
+// ── doDeleteUpdate(id) ────────────────────────────────────────────────────
+// Permanently removes an update (open or resolved) from the project.
+function doDeleteUpdate(id) {
+  const p = P();
+  p.updates = p.updates.filter(u => u.id != id);
+  p.log.unshift({ date:tdy(), text:'Update deleted' });
+  save(); render();
+}
+
+// ── doSaveEditUpdate(id) ──────────────────────────────────────────────────
+// Saves edits made in the inline update edit form.
+function doSaveEditUpdate(id) {
+  const u = P().updates.find(x => x.id == id);
+  if (!u) return;
+  const newType = document.querySelector(`[data-edittype="${id}"]`)?.value;
+  const newText = (document.querySelector(`[data-edittxt="${id}"]`)?.value || '').trim();
+  if (newType) u.type = newType;
+  if (newText) u.text = newText;
+  P().log.unshift({ date:tdy(), text:'Update edited' });
+  S.editingUpdateId = null;
+  save(); render();
+}
+
+// ── doMoveProject(id, dir) ─────────────────────────────────────────────────
+// Shifts a project one position up (dir=-1) or down (dir=+1) in S.projects.
+// Only active (non-archived) projects participate in ordering; archived ones
+// stay at whatever position they were when archived.
+function doMoveProject(id, dir) {
+  const idx = S.projects.findIndex(p => p.id === id);
+  if (idx === -1) return; // project not found
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= S.projects.length) return; // already at edge
+  // Swap the two elements
+  const tmp = S.projects[idx];
+  S.projects[idx] = S.projects[newIdx];
+  S.projects[newIdx] = tmp;
+  save(); rSB();
+}
+
+// ── doArchiveProject() ─────────────────────────────────────────────────────
+// Marks the currently selected project as archived (hidden from active list).
+// The project and all its data are kept — nothing is deleted. The team can
+// restore it at any time via the "Show archived" toggle + Restore button.
+function doArchiveProject() {
+  const p = P();
+  if (!p) return;
+  if (p.archived) {
+    // If already archived, treat the button as "Restore"
+    p.archived = false;
+    p.log.unshift({ date:tdy(), text:'Project restored from archive' });
+  } else {
+    p.archived = true;
+    p.log.unshift({ date:tdy(), text:'Project archived' });
+    // Switch selection to another active project so the main panel isn't blank
+    const next = S.projects.find(x => !x.archived && x.id !== p.id);
+    S.sel = next ? next.id : (S.projects[0]?.id || null);
+  }
+  save(); render();
+}
+
+// ── doRestoreProject(id) ───────────────────────────────────────────────────
+// Takes a project out of the archive and puts it back in the active list.
+// Called from the Restore button shown inside the "Archived" sidebar section.
+function doRestoreProject(id) {
+  const p = S.projects.find(x => x.id === id);
+  if (!p) return;
+  p.archived = false;
+  p.log.unshift({ date:tdy(), text:'Project restored from archive' });
+  S.sel = id; // switch to the restored project
+  save(); render();
+}
+
+// ── Mobile sidebar toggle ──────────────────────────────────────────────────
+function openSB()  { document.getElementById('sb').classList.add('open'); document.getElementById('sb-overlay').classList.add('show'); }
+function closeSB() { document.getElementById('sb').classList.remove('open'); document.getElementById('sb-overlay').classList.remove('show'); }
+
+document.getElementById('mob-menu-btn').addEventListener('click', openSB);
+document.getElementById('sb-overlay').addEventListener('click', closeSB);
+
+// Close sidebar when a project is selected on mobile
+document.getElementById('sb').addEventListener('click', e => {
+  if (e.target.closest('[data-pid]') && window.innerWidth <= 700) closeSB();
+});
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+load().then(() => render());
+</script>
+</body>
+</html>
