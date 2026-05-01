@@ -566,6 +566,7 @@ let S = {
   sel: 1,              // ID of the currently selected project
   tab: 'overview',     // Which tab is active: 'overview','bom','firmware','settings','import'
   view: 'dashboard',   // Top-level view: 'dashboard' | 'projects' | 'inventory'
+  descOpen: false,     // Whether the project description line is expanded in the header
   showArchived: false, // Whether archived projects are visible at the bottom of the sidebar
   importTxt: '',       // The text currently typed in the Import tab textarea
   preview: null,       // Parsed result of the import preview (null if not previewed yet)
@@ -1687,11 +1688,15 @@ function rMain() {
     </div>
     <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
       <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:${S.descOpen?'6':'0'}px;flex-wrap:wrap">
           <h1 style="font-size:18px;font-weight:600;letter-spacing:-0.01em">${esc(p.name)}</h1>
           ${stag(p.stage)}
+          <button data-toggledesc
+            style="font-size:10px;font-family:var(--mono);padding:2px 7px;color:var(--txt3);margin-left:2px"
+            title="${S.descOpen ? 'Hide details' : 'Show details'}"
+          >${S.descOpen ? '▾ less' : '▸ details'}</button>
         </div>
-        <div style="font-size:12px;color:var(--txt4)">${esc(p.desc)||'No description'} &nbsp;·&nbsp; Lead: <span style="color:var(--txt2)">${esc(p.lead)||'Unassigned'}</span></div>
+        ${S.descOpen ? `<div style="font-size:12px;color:var(--txt4)">${esc(p.desc)||'No description'} &nbsp;·&nbsp; Lead: <span style="color:var(--txt2)">${esc(p.lead)||'Unassigned'}</span></div>` : ''}
       </div>
       <a href="${esc(p.sp)}" target="_blank"
          style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);
@@ -1841,7 +1846,7 @@ document.getElementById('sb').addEventListener('click', e => {
 
   // Select a project (switch main panel to it)
   const pj = e.target.closest('[data-pid]');
-  if (pj) { S.sel=parseInt(pj.dataset.pid); S.tab='overview'; S.view='projects'; S.preview=null; S.showUF=false; render(); }
+  if (pj) { S.sel=parseInt(pj.dataset.pid); S.tab='overview'; S.view='projects'; S.preview=null; S.showUF=false; S.descOpen=false; render(); }
 });
 document.getElementById('np-btn').addEventListener('click', () => {
   document.getElementById('np-btn').style.display='none';
@@ -1879,7 +1884,7 @@ document.getElementById('mn').addEventListener('click', e => {
 
   // Dashboard: click a project card to open it
   const dpid = e.target.closest('[data-dashpid]');
-  if (dpid) { S.sel=parseInt(dpid.dataset.dashpid); S.tab='overview'; S.view='projects'; S.preview=null; S.showUF=false; render(); return; }
+  if (dpid) { S.sel=parseInt(dpid.dataset.dashpid); S.tab='overview'; S.view='projects'; S.preview=null; S.showUF=false; S.descOpen=false; render(); return; }
 
   // Dashboard: "+ New project" button triggers the sidebar form
   if (e.target.closest('[data-openNewProject]')) {
@@ -1891,6 +1896,8 @@ document.getElementById('mn').addEventListener('click', e => {
 
   // Back to dashboard button inside project view
   if (e.target.closest('[data-goDashboard]')) { S.view='dashboard'; render(); return; }
+
+  if (e.target.closest('[data-toggledesc]')) { S.descOpen = !S.descOpen; rMain(); return; }
 
   const tb = e.target.closest('[data-tab]');
   if (tb) { S.tab=tb.dataset.tab; S.preview=null; render(); return; }
