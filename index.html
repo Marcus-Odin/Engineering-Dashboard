@@ -1071,7 +1071,7 @@ function rSection(sec) {
 function rBOM(p) {
   const costPerBuild = p.bom.reduce((s,b) => s + (b.qtyPerBuild||1)*(parseFloat(b.unitCost)||0), 0);
 
-  const rows = p.bom.length ? p.bom.map(b => {
+  const rows = p.bom.length ? [...p.bom].sort((a,b) => a.part.localeCompare(b.part)).map(b => {
     // ── Inline edit row ──
     if (S.editingBomId == b.id) {
       return `<tr style="background:#F8FAFF;">
@@ -1133,8 +1133,9 @@ function rBOM(p) {
     </tr>`;
   }).join('') : `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--txt4);font-family:var(--mono)">No parts added yet</td></tr>`;
 
-  // Inventory part names for datalist autocomplete
-  const invParts = S.inventory.map(i => `<option value="${esc(i.part)}">`).join('');
+  // Inventory part names for datalist autocomplete (alphabetical)
+  const invParts = [...S.inventory].sort((a,b) => a.part.localeCompare(b.part))
+    .map(i => `<option value="${esc(i.part)}">`).join('');
 
   return `
   <div class="card" style="margin-bottom:12px;background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border-color:#86EFAC">
@@ -1356,7 +1357,7 @@ function rInventory() {
       </div>
     </div>` : '';
 
-  const invRows = S.inventory.length ? S.inventory.map(item => {
+  const invRows = S.inventory.length ? [...S.inventory].sort((a,b) => a.part.localeCompare(b.part)).map(item => {
     // ── Inline edit row ──
     if (S.editingInvId == item.id) {
       return `<tr style="background:#F8FAFF;">
