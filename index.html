@@ -1824,11 +1824,11 @@ function render() {
 document.getElementById('sb').addEventListener('click', e => {
   // ▲ Move project up in priority order
   const mu = e.target.closest('[data-moveup]');
-  if (mu) { e.stopPropagation(); doMoveProject(parseInt(mu.dataset.moveup), -1); return; }
+  if (mu) { e.stopImmediatePropagation(); doMoveProject(parseInt(mu.dataset.moveup), -1); return; }
 
   // ▼ Move project down in priority order
   const md = e.target.closest('[data-movedown]');
-  if (md) { e.stopPropagation(); doMoveProject(parseInt(md.dataset.movedown), 1); return; }
+  if (md) { e.stopImmediatePropagation(); doMoveProject(parseInt(md.dataset.movedown), 1); return; }
 
   // Toggle "Show archived" section visibility
   if (e.target.closest('[data-togglearchived]')) {
@@ -2375,9 +2375,12 @@ function closeSB() { document.getElementById('sb').classList.remove('open'); doc
 document.getElementById('mob-menu-btn').addEventListener('click', openSB);
 document.getElementById('sb-overlay').addEventListener('click', closeSB);
 
-// Close sidebar when a project is selected on mobile
+// Close sidebar when a project is selected on mobile (but not when tapping move buttons)
 document.getElementById('sb').addEventListener('click', e => {
-  if (e.target.closest('[data-pid]') && window.innerWidth <= 700) closeSB();
+  if (e.target.closest('[data-pid]')
+      && !e.target.closest('[data-moveup]')
+      && !e.target.closest('[data-movedown]')
+      && window.innerWidth <= 700) closeSB();
 });
 
 // ── Refresh button ─────────────────────────────────────────────────────────
