@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ODIN ENG. — Project Hub</title>
+<!-- iOS home screen app support -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Odin Hub">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Workbench&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -349,6 +354,7 @@ button:hover { background: var(--surface2); border-color: #6B7280; }
     <div id="inv-nav"></div>
   </div>
   <div id="sb-footer">
+    <button class="btn-full" id="sb-refresh" style="margin-bottom:6px;font-size:11px;color:var(--txt3)">↻ Refresh data</button>
     <button class="btn-full" id="np-btn">+ New project</button>
     <div id="np-form" style="display:none;margin-top:8px">
       <input type="text" id="np-inp" placeholder="Project name…" style="margin-bottom:6px;font-family:var(--sans)">
@@ -574,20 +580,23 @@ let S = {
 };
 
 // ── PERSISTENCE ────────────────────────────────────────────────────────────
-// save() pushes the entire projects array to Supabase row id=1.
-// It's called automatically any time data changes (checkbox, form submit, etc).
-// The save happens in the background — the UI updates immediately.
+// saving flag prevents load() from overwriting in-flight save operations.
+let saving = false;
+
 async function save() {
+  saving = true;
   try {
     await sbClient.from('hub_data').upsert({ id: 1, projects: S.projects });
-    await sbClient.from('hub_data').upsert({ id: 2, projects: S.inventory }); // row 2 stores inventory
+    await sbClient.from('hub_data').upsert({ id: 2, projects: S.inventory });
   } catch(e) { console.error('Save failed:', e); }
+  finally { saving = false; }
 }
 
 // load() fetches the projects array from Supabase when the page first opens.
 // Also handles "migrations" — adding new fields to old saved data so the app
 // doesn't break when we add features like 'archived' or 'sections'.
 async function load() {
+  if (saving) return; // don't overwrite while a save is in progress
   try {
     // Load projects (row 1)
     const { data, error } = await sbClient
@@ -2112,12 +2121,13 @@ function doRemoveMember(name) {
   save(); rMain();
 }
 
-function doDeleteProject() {
+async function doDeleteProject() {
   document.getElementById('del-modal').style.display='none';
   S.projects=S.projects.filter(p=>p.id!==S.sel);
   S.sel=S.projects.length ? S.projects[0].id : null;
   S.tab='overview';
-  save(); render();
+  await save();
+  render();
 }
 
 function doAddBOM() {
@@ -2360,6 +2370,26 @@ document.getElementById('sb-overlay').addEventListener('click', closeSB);
 // Close sidebar when a project is selected on mobile
 document.getElementById('sb').addEventListener('click', e => {
   if (e.target.closest('[data-pid]') && window.innerWidth <= 700) closeSB();
+});
+
+// ── Refresh button ─────────────────────────────────────────────────────────
+document.getElementById('sb-refresh').addEventListener('click', async () => {
+  const btn = document.getElementById('sb-refresh');
+  btn.textContent = '↻ Refreshing…';
+  btn.disabled = true;
+  await load();
+  render();
+  btn.textContent = '↻ Refresh data';
+  btn.disabled = false;
+});
+
+// ── Auto-reload when app comes back into focus (iOS home screen) ────────────
+// On iPhone, switching away and back to the app triggers visibilitychange.
+// This re-fetches data from Supabase so the screen is always up to date.
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    load().then(() => render());
+  }
 });
 
 // ── Boot ───────────────────────────────────────────────────────────────────
