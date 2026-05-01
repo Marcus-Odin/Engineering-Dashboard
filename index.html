@@ -2009,10 +2009,15 @@ document.getElementById('mn').addEventListener('change', e => {
 
 // ── Modal click-outside to close ───────────────────────────────────────────
 document.getElementById('sec-modal').addEventListener('click', e=>{
-  if (e.target===document.getElementById('sec-modal')) document.getElementById('sec-modal').style.display='none';
+  if (e.target===document.getElementById('sec-modal')) { document.getElementById('sec-modal').style.display='none'; return; }
+  if (e.target.closest('[data-closesecmodal]')) { document.getElementById('sec-modal').style.display='none'; return; }
+  const ps = e.target.closest('[data-picksection]');
+  if (ps) { doAddSection(ps.dataset.picksection); return; }
 });
 document.getElementById('del-modal').addEventListener('click', e=>{
-  if (e.target===document.getElementById('del-modal')) document.getElementById('del-modal').style.display='none';
+  if (e.target===document.getElementById('del-modal')) { document.getElementById('del-modal').style.display='none'; return; }
+  if (e.target.closest('[data-confirmdelete]')) { doDeleteProject(); return; }
+  if (e.target.closest('[data-canceldelete]'))  { document.getElementById('del-modal').style.display='none'; return; }
 });
 
 // ── Lightbox close ─────────────────────────────────────────────────────────
