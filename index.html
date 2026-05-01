@@ -898,7 +898,11 @@ function rOverview(p) {
   const blockerUpd = openUpd.filter(u => u.isBlocker);
   const dirUpd     = openUpd.filter(u => u.type === 'direction');
   const reqUpd     = openUpd.filter(u => u.type === 'request');
-  const rcvd       = p.bom.filter(b => b.received).length;
+  // "received" now lives on the inventory item, not the project BOM
+  const rcvd = p.bom.filter(b => {
+    const inv = getInventoryItem(b.part);
+    return inv && inv.received;
+  }).length;
 
   const summaryLines = [];
   summaryLines.push(`<strong>${esc(p.name)}</strong> is currently in the <strong>${p.stage}</strong> stage.`);
