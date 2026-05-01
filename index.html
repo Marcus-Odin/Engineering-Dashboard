@@ -18,8 +18,8 @@
   --border2: #F3F4F6;
   --txt1: #111827;
   --txt2: #374151;
-  --txt3: #6B7280;
-  --txt4: #9CA3AF;
+  --txt3: #374151;
+  --txt4: #4B5563;
   --blue: #3B82F6;
   --blue-bg: #EFF6FF;
   --blue-lt: #DBEAFE;
@@ -46,9 +46,9 @@ body { display: flex; overflow: hidden; }
   border-right: 1px solid var(--border); display: flex;
   flex-direction: column; height: 100vh; overflow: hidden;
 }
-#sb-head { padding: 18px 16px 12px; border-bottom: 1px solid #222; flex-shrink: 0; background: #ffffff; }
-#sb-head .app-name { font-size: 28px; font-weight: 400; color: #93D500; letter-spacing: 0.02em; font-family: 'Workbench', cursive; }
-#sb-head .app-sub  { font-size: 14px; font-family: var(--mono); color: #93D500; letter-spacing: 0.04em; margin-top: 2px; }
+#sb-head { padding: 14px 16px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--surface); }
+#sb-head .app-name { font-size: 22px; font-weight: 400; color: #93D500; letter-spacing: 0.02em; font-family: 'Workbench', cursive; }
+#sb-head .app-sub  { font-size: 11px; font-family: var(--mono); color: #93D500; letter-spacing: 0.04em; margin-top: 2px; }
 #sb-label { padding: 10px 16px 4px; font-size: 10px; font-family: var(--mono); color: var(--txt4); letter-spacing: 0.06em; }
 #pjl { flex: 1; overflow-y: auto; padding: 0 8px 8px; }
 #pjl::-webkit-scrollbar { width: 3px; }
@@ -63,20 +63,20 @@ body { display: flex; overflow: hidden; }
 
 /* ── Main ────────────────────────────────────────────────────────────────── */
 #mn { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-#proj-hdr { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 22px 0; flex-shrink: 0; }
+#proj-hdr { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 22px 14px; flex-shrink: 0; }
 #proj-body { flex: 1; overflow-y: auto; padding: 16px 22px; }
 #proj-body::-webkit-scrollbar { width: 4px; }
 #proj-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 /* ── Tabs ────────────────────────────────────────────────────────────────── */
 .tabs { display: flex; margin-top: 6px; flex-wrap: wrap; }
-.tb { background: none; border: none; cursor: pointer; padding: 8px 14px; font-family: var(--sans); font-size: 13px; color: var(--txt4); border-bottom: 2px solid transparent; transition: all 0.15s; }
+.tb { background: none; border: none; cursor: pointer; padding: 8px 14px; font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--txt3); border-bottom: 2px solid transparent; transition: all 0.15s; }
 .tb:hover:not(.on) { color: var(--txt2); }
 .tb.on { color: var(--blue); border-bottom-color: var(--blue); }
 
 /* ── Cards ───────────────────────────────────────────────────────────────── */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 12px; }
-.card-lbl { font-size: 12px; font-family: var(--mono); font-weight: 600; color: var(--txt2); letter-spacing: 0.07em; margin-bottom: 10px; text-transform: uppercase; }
+.card-lbl { font-size: 12px; font-family: var(--mono); font-weight: 700; color: var(--txt1); letter-spacing: 0.07em; margin-bottom: 10px; text-transform: uppercase; }
 
 /* ── Stage tracker ───────────────────────────────────────────────────────── */
 #stage-wrap { position: relative; padding: 10px 0 6px; }
@@ -116,17 +116,18 @@ input[type=checkbox] { cursor: pointer; accent-color: var(--blue); width: 14px; 
 input[type=range] { cursor: pointer; accent-color: var(--blue); width: 100%; }
 
 button {
-  background: var(--surface); border: 1px solid var(--border);
+  background: var(--surface); border: 1px solid #9CA3AF;
   border-radius: var(--radius); padding: 5px 12px; font-family: var(--sans);
   font-size: 12px; color: var(--txt2); cursor: pointer; transition: all 0.1s;
   white-space: nowrap;
 }
-button:hover { background: var(--surface2); border-color: #D1D5DB; }
-.btn-primary { background: var(--blue-lt); color: var(--blue-dk); border-color: #BFDBFE; }
-.btn-primary:hover { background: #BFDBFE; }
-.btn-warn { background: var(--amber-lt); color: var(--amber-dk); border-color: #FDE68A; }
-.btn-danger { background: var(--red-lt); color: var(--red-dk); border-color: #FECACA; }
-.btn-danger:hover { background: #FECACA; }
+button:hover { background: var(--surface2); border-color: #6B7280; }
+.btn-primary { background: var(--blue-lt); color: var(--blue-dk); border-color: #93C5FD; }
+.btn-primary:hover { background: #BFDBFE; border-color: #60A5FA; }
+.btn-warn { background: var(--amber-lt); color: var(--amber-dk); border-color: #FCD34D; }
+.btn-warn:hover { border-color: #F59E0B; }
+.btn-danger { background: var(--red-lt); color: var(--red-dk); border-color: #FCA5A5; }
+.btn-danger:hover { background: #FECACA; border-color: #F87171; }
 .btn-full { width: 100%; text-align: center; }
 
 /* ── Tags & badges ───────────────────────────────────────────────────────── */
@@ -159,7 +160,7 @@ button:hover { background: var(--surface2); border-color: #D1D5DB; }
 
 /* ── Sidebar blocker flash ────────────────────────────────────────────────── */
 @keyframes pjFlash {
-  0%,100% { background: transparent; box-shadow: none; }
+  0%,100% { background: #ffffff; box-shadow: none; }
   50%      { background: #FEE2E2; box-shadow: inset 0 0 0 2px #FCA5A5; }
 }
 .pj.has-blocker { animation: pjFlash 2s ease-in-out infinite; border-radius: var(--radius); }
@@ -182,7 +183,28 @@ button:hover { background: var(--surface2); border-color: #D1D5DB; }
 
 /* ── Settings form ───────────────────────────────────────────────────────── */
 .s-field { margin-bottom: 14px; }
-.s-label { font-size: 10px; font-family: var(--mono); color: var(--txt4); letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 5px; }
+.s-label { font-size: 10px; font-family: var(--mono); font-weight: 600; color: var(--txt3); letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 5px; }
+
+/* ── Image lightbox ──────────────────────────────────────────────────────── */
+#img-lightbox {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 500;
+  display: none; align-items: center; justify-content: center; cursor: zoom-out;
+}
+#img-lightbox img {
+  max-width: 90vw; max-height: 90vh; border-radius: 10px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.6); object-fit: contain;
+}
+#img-lightbox-close {
+  position: fixed; top: 18px; right: 22px; font-size: 28px; color: #fff;
+  background: none; border: none; cursor: pointer; opacity: 0.7; line-height: 1;
+}
+#img-lightbox-close:hover { opacity: 1; }
+.upd-thumb {
+  width: 56px; height: 56px; object-fit: cover; border-radius: 6px;
+  cursor: zoom-in; border: 1px solid var(--border); flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.upd-thumb:hover { opacity: 0.85; }
 
 /* ── Modal overlays ──────────────────────────────────────────────────────── */
 .modal-overlay {
@@ -316,7 +338,7 @@ button:hover { background: var(--surface2); border-color: #D1D5DB; }
 
 <!-- Sidebar -->
 <div id="sb">
-  <div id="sb-head">
+  <div id="sb-head" data-goDashboard title="Back to dashboard" style="cursor:pointer">
     <div class="app-name">Odin E-Works</div>
     <div class="app-sub">Project Hub</div>
   </div>
@@ -352,6 +374,12 @@ button:hover { background: var(--surface2); border-color: #D1D5DB; }
     <div class="sec-pick-grid" id="sec-pick-grid"></div>
     <button data-closesecmodal style="margin-top:14px;width:100%;text-align:center;color:var(--txt4)">Cancel</button>
   </div>
+</div>
+
+<!-- Image lightbox -->
+<div id="img-lightbox">
+  <button id="img-lightbox-close" title="Close">✕</button>
+  <img id="img-lightbox-img" src="" alt="Full size image">
 </div>
 
 <!-- Delete project confirm modal -->
@@ -531,7 +559,7 @@ const DEFAULT_PROJECTS = [
 let S = {
   sel: 1,              // ID of the currently selected project
   tab: 'overview',     // Which tab is active: 'overview','bom','firmware','settings','import'
-  view: 'projects',    // Top-level view: 'projects' | 'inventory'
+  view: 'dashboard',   // Top-level view: 'dashboard' | 'projects' | 'inventory'
   showArchived: false, // Whether archived projects are visible at the bottom of the sidebar
   importTxt: '',       // The text currently typed in the Import tab textarea
   preview: null,       // Parsed result of the import preview (null if not previewed yet)
@@ -572,7 +600,10 @@ async function load() {
         if (!Array.isArray(p.updates))   p.updates = [];
         if (!Array.isArray(p.blockers))  p.blockers = [];
         if (p.summary === undefined)     p.summary = '';
-        p.updates.forEach(u => { if (u.isBlocker === undefined) u.isBlocker = false; });
+        p.updates.forEach(u => {
+          if (u.isBlocker === undefined) u.isBlocker = false;
+          if (u.image     === undefined) u.image     = null;
+        });
         // v5 BOM migration: move to cost-focused format
         p.bom.forEach(b => {
           if (b.qtyPerBuild === undefined) b.qtyPerBuild = b.qty || 1;
@@ -641,6 +672,27 @@ function pbar(lbl, v, c='#3B82F6') {
     <div class="pbar-track"><div class="pbar-fill" style="width:${v}%;background:${c}"></div></div>
   </div>`;
 }
+// compressImage() resizes an image file to max 1000px wide and returns a base64 JPEG string.
+// This keeps stored images small enough to fit in the Supabase JSON blob.
+function compressImage(file, maxW=1000, quality=0.80) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function parseImport(txt) {
   const r = {}, acts = [];
   txt.split('\n').forEach(l => {
@@ -803,6 +855,12 @@ function rUpdates(p) {
       </div>
       <textarea id="ud-txt" style="min-height:64px;margin-bottom:8px;font-family:var(--sans);font-size:13px"
         placeholder="What does the team need to know, decide, or act on?"></textarea>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <label style="font-size:11px;font-family:var(--mono);color:var(--txt3);white-space:nowrap">📎 Image:</label>
+        <input type="file" id="ud-img" accept="image/*"
+          style="font-size:11px;font-family:var(--sans);flex:1;min-width:0;padding:4px 8px;background:var(--surface2);border:1px solid #9CA3AF;border-radius:var(--radius)">
+        <span id="ud-img-preview"></span>
+      </div>
       <button data-postupd class="btn-primary" style="font-size:12px;padding:6px 16px">Post update</button>
     </div>`;
   }
@@ -821,6 +879,12 @@ function rUpdates(p) {
             </select>
           </div>
           <textarea data-edittxt="${u.id}" style="min-height:64px;margin-bottom:8px;font-family:var(--sans);font-size:13px">${esc(u.text)}</textarea>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+            ${u.image ? `<img src="${u.image}" class="upd-thumb" data-lightbox="1" title="Current image — click to view">` : ''}
+            <label style="font-size:11px;font-family:var(--mono);color:var(--txt3);white-space:nowrap">${u.image ? '🔄 Replace:' : '📎 Image:'}</label>
+            <input type="file" data-editimg="${u.id}" accept="image/*"
+              style="font-size:11px;flex:1;min-width:0;padding:4px 8px;background:var(--surface2);border:1px solid #9CA3AF;border-radius:var(--radius)">
+          </div>
           <div style="display:flex;gap:8px">
             <button data-saveedit="${u.id}" class="btn-primary" style="font-size:11px;padding:5px 14px">Save</button>
             <button data-canceledit style="font-size:11px;padding:5px 14px;color:var(--txt4)">Cancel</button>
@@ -847,6 +911,7 @@ function rUpdates(p) {
             ${esc(u.author)} · ${u.date}
             ${u.isBlocker ? ' · <span style="color:#EF4444;font-weight:600;letter-spacing:0.03em">BLOCKER</span>' : ''}
           </div>
+          ${u.image ? `<img src="${u.image}" class="upd-thumb" data-lightbox="1" style="margin-top:8px" title="Click to view full size">` : ''}
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0;align-self:flex-start;margin-top:1px">
           <button data-editupdid="${u.id}" style="font-size:11px;color:#6B7280;padding:3px 8px">Edit</button>
@@ -1323,6 +1388,107 @@ function rImport() {
   </div>` : ''}`;
 }
 
+// ── Dashboard: all-project overview ───────────────────────────────────────
+function rDashboard() {
+  const hdr  = document.getElementById('proj-hdr');
+  const body = document.getElementById('proj-body');
+  const active   = S.projects.filter(p => !p.archived);
+  const archived = S.projects.filter(p =>  p.archived);
+
+  // Summary stats across all projects
+  const totalBlockers = S.projects.reduce((n,p) => n + p.updates.filter(u=>!u.resolved&&u.isBlocker).length, 0);
+  const totalDir      = S.projects.reduce((n,p) => n + p.updates.filter(u=>!u.resolved&&u.type==='direction').length, 0);
+
+  hdr.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <h1 style="font-size:20px;font-weight:600;letter-spacing:-0.01em">All Projects</h1>
+        <div style="font-size:12px;color:var(--txt4);margin-top:3px;display:flex;gap:12px;flex-wrap:wrap">
+          <span>${active.length} active</span>
+          ${totalBlockers ? `<span style="color:#DC2626;font-weight:500">⚠ ${totalBlockers} blocker${totalBlockers>1?'s':''}</span>` : ''}
+          ${totalDir      ? `<span style="color:#92400E">${totalDir} need${totalDir>1?'':'s'} direction</span>` : ''}
+          ${!totalBlockers&&!totalDir ? `<span style="color:#15803D">✓ All clear</span>` : ''}
+        </div>
+      </div>
+      <button data-openNewProject class="btn-primary" style="padding:8px 18px;font-size:13px">+ New project</button>
+    </div>`;
+
+  if (!active.length) {
+    body.innerHTML = `<div class="empty">No active projects — create one to get started</div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px">
+      ${active.map(p => {
+        const openUpd    = p.updates.filter(u => !u.resolved);
+        const hasBlocker = openUpd.some(u => u.isBlocker);
+        const dc         = openUpd.filter(u => u.type==='direction').length;
+        const costPerBuild = p.bom.reduce((s,b) => s+(b.qtyPerBuild||1)*(parseFloat(b.unitCost)||0), 0);
+        const rcvd       = p.bom.filter(b => { const inv=getInventoryItem(b.part); return inv&&inv.received; }).length;
+        const borderCol  = hasBlocker ? '#EF4444' : dc ? '#FCD34D' : 'var(--border)';
+        const badgeBg    = hasBlocker ? '#FEE2E2' : dc ? '#FEF3C7' : '#DBEAFE';
+        const badgeTc    = hasBlocker ? '#991B1B' : dc ? '#92400E' : '#1E40AF';
+
+        return `<div data-dashpid="${p.id}"
+          style="background:var(--surface);border:1px solid ${borderCol};border-radius:var(--radius-lg);
+                 padding:16px;cursor:pointer;transition:box-shadow 0.15s,transform 0.15s;
+                 ${hasBlocker?'animation:pjFlash 2s ease-in-out infinite;':''}"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.09)';this.style.transform='translateY(-2px)'"
+          onmouseout="this.style.boxShadow='';this.style.transform=''">
+
+          <!-- Card header -->
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+            <div style="min-width:0">
+              <div style="font-size:15px;font-weight:600;color:var(--txt1);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name)}</div>
+              ${stag(p.stage)}
+            </div>
+            ${openUpd.length ? `<span class="badge" style="background:${badgeBg};color:${badgeTc};flex-shrink:0;font-size:10px;padding:2px 8px">${openUpd.length}</span>` : ''}
+          </div>
+
+          <!-- Description -->
+          <div style="font-size:12px;color:var(--txt4);margin-bottom:10px;min-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.desc)||'No description'}</div>
+
+          <!-- Lead -->
+          <div style="font-size:11px;color:var(--txt3);margin-bottom:13px">
+            Lead: <span style="color:var(--txt2);font-weight:500">${esc(p.lead)||'Unassigned'}</span>
+          </div>
+
+          <!-- Progress bars -->
+          <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:13px">
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+                <span style="font-size:10px;font-family:var(--mono);color:var(--txt4)">Firmware</span>
+                <span style="font-size:10px;font-family:var(--mono);color:#3B82F6">${p.fw}%</span>
+              </div>
+              <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+                <div style="height:100%;width:${p.fw}%;background:#3B82F6;border-radius:2px"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+                <span style="font-size:10px;font-family:var(--mono);color:var(--txt4)">Hardware</span>
+                <span style="font-size:10px;font-family:var(--mono);color:#F59E0B">${p.hw}%</span>
+              </div>
+              <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+                <div style="height:100%;width:${p.hw}%;background:#F59E0B;border-radius:2px"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border2)">
+            <span style="font-size:10px;font-family:var(--mono);color:var(--txt4)">
+              ${p.bom.length ? `${rcvd}/${p.bom.length} parts` : 'No BOM'}
+              ${costPerBuild ? ` · <span style="color:#15803D">$${costPerBuild.toFixed(2)}/build</span>` : ''}
+            </span>
+            ${hasBlocker ? `<span style="font-size:9px;font-family:var(--mono);color:#EF4444;font-weight:600;letter-spacing:0.05em">⚠ BLOCKER</span>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
 // ── Inventory Manager ──────────────────────────────────────────────────────
 function rInventory() {
   const hdr  = document.getElementById('proj-hdr');
@@ -1338,13 +1504,14 @@ function rInventory() {
       </div>
     </div>`;
 
-  // Build parts used-in map across all projects
+  // Build parts used-in map across all projects (name + qty per build)
   const usedIn = {};
   S.projects.filter(p => !p.archived).forEach(p => {
     p.bom.forEach(b => {
       const key = b.part.toLowerCase();
       if (!usedIn[key]) usedIn[key] = [];
-      if (!usedIn[key].includes(p.name)) usedIn[key].push(p.name);
+      const existing = usedIn[key].find(x => x.name === p.name);
+      if (!existing) usedIn[key].push({ name: p.name, qty: b.qtyPerBuild || 1 });
     });
   });
 
@@ -1422,7 +1589,9 @@ function rInventory() {
       <td style="text-align:center;font-family:var(--mono);color:var(--txt4)">${item.reorderAt}</td>
       <td>
         ${projects.length
-          ? projects.map(n=>`<span style="font-size:9px;font-family:var(--mono);background:${projects.length>1?'#EDE9FE':'var(--surface2)'};color:${projects.length>1?'#5B21B6':'var(--txt3)'};border-radius:4px;padding:1px 6px;margin:1px;display:inline-block">${esc(n)}</span>`).join('')
+          ? projects.map(entry=>`<span style="font-size:9px;font-family:var(--mono);background:${projects.length>1?'#EDE9FE':'var(--surface2)'};color:${projects.length>1?'#5B21B6':'var(--txt3)'};border-radius:4px;padding:2px 7px;margin:1px;display:inline-flex;align-items:center;gap:4px">
+              ${esc(entry.name)}<span style="font-weight:700;opacity:0.75">×${entry.qty}</span>
+            </span>`).join('')
           : '<span style="font-size:10px;color:var(--txt4);font-family:var(--mono)">—</span>'}
       </td>
       <td style="text-align:center;white-space:nowrap">
@@ -1499,6 +1668,14 @@ function rMain() {
     return;
   }
   hdr.innerHTML = `
+    <div style="margin-bottom:6px">
+      <button data-goDashboard
+        style="font-size:11px;font-family:var(--mono);color:var(--txt3);background:var(--surface2);
+               padding:4px 10px;cursor:pointer;letter-spacing:0.02em;display:inline-flex;align-items:center;gap:4px"
+        onmouseover="this.style.borderColor='#6B7280';this.style.color='var(--blue)'"
+        onmouseout="this.style.borderColor='#9CA3AF';this.style.color='var(--txt3)'"
+      >← All Projects</button>
+    </div>
     <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
@@ -1525,7 +1702,7 @@ function rMain() {
       ${[
         ['overview','Overview'],
         ['bom','BOM'],
-        ['firmware','Firmware'],
+        ['firmware','Hard/Firm'],
         ['settings','⚙ Settings'],
         ['import','Import']
       ].map(([t,l])=>`<button class="tb${S.tab===t?' on':''}" data-tab="${t}" style="background:none;border:none;border-radius:0">${l}</button>`).join('')}
@@ -1621,6 +1798,7 @@ function rMain() {
 function render() {
   rSB();
   if (S.view === 'inventory') rInventory();
+  else if (S.view === 'dashboard') rDashboard();
   else rMain();
 }
 
@@ -1645,6 +1823,9 @@ document.getElementById('sb').addEventListener('click', e => {
   // Restore an archived project back to active
   const rs = e.target.closest('[data-restore]');
   if (rs) { e.stopPropagation(); doRestoreProject(parseInt(rs.dataset.restore)); return; }
+
+  // Go to dashboard view (logo click)
+  if (e.target.closest('[data-goDashboard]')) { S.view='dashboard'; render(); return; }
 
   // Go to inventory view
   if (e.target.closest('[data-goInventory]')) { S.view='inventory'; render(); return; }
@@ -1679,6 +1860,29 @@ document.getElementById('np-ok').addEventListener('click', () => {
 
 // ── Main click events ──────────────────────────────────────────────────────
 document.getElementById('mn').addEventListener('click', e => {
+  // Image lightbox — clicking a thumbnail opens full-size view
+  const thumb = e.target.closest('[data-lightbox]');
+  if (thumb) {
+    document.getElementById('img-lightbox-img').src = thumb.src;
+    document.getElementById('img-lightbox').style.display = 'flex';
+    return;
+  }
+
+  // Dashboard: click a project card to open it
+  const dpid = e.target.closest('[data-dashpid]');
+  if (dpid) { S.sel=parseInt(dpid.dataset.dashpid); S.tab='overview'; S.view='projects'; S.preview=null; S.showUF=false; render(); return; }
+
+  // Dashboard: "+ New project" button triggers the sidebar form
+  if (e.target.closest('[data-openNewProject]')) {
+    document.getElementById('np-btn').style.display='none';
+    document.getElementById('np-form').style.display='block';
+    document.getElementById('np-inp').focus();
+    return;
+  }
+
+  // Back to dashboard button inside project view
+  if (e.target.closest('[data-goDashboard]')) { S.view='dashboard'; render(); return; }
+
   const tb = e.target.closest('[data-tab]');
   if (tb) { S.tab=tb.dataset.tab; S.preview=null; render(); return; }
 
@@ -1811,6 +2015,21 @@ document.getElementById('del-modal').addEventListener('click', e=>{
   if (e.target===document.getElementById('del-modal')) document.getElementById('del-modal').style.display='none';
 });
 
+// ── Lightbox close ─────────────────────────────────────────────────────────
+const lbEl = document.getElementById('img-lightbox');
+lbEl.addEventListener('click', e => {
+  if (e.target === lbEl || e.target.id === 'img-lightbox-close') {
+    lbEl.style.display = 'none';
+    document.getElementById('img-lightbox-img').src = '';
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    lbEl.style.display = 'none';
+    document.getElementById('img-lightbox-img').src = '';
+  }
+});
+
 // ── Actions ────────────────────────────────────────────────────────────────
 function doAddBlocker() {
   const val = (S.newBlocker||document.getElementById('blk-inp')?.value||'').trim();
@@ -1821,12 +2040,14 @@ function doAddBlocker() {
   save(); render();
 }
 
-function doPostUpdate() {
+async function doPostUpdate() {
   const type   = document.getElementById('ud-type')?.value || S.ud.type;
   const author = (document.getElementById('ud-auth')?.value||S.ud.author||'').trim()||'Team';
   const text   = (document.getElementById('ud-txt')?.value ||S.ud.text ||'').trim();
   if (!text) return;
-  P().updates.unshift({ id:Date.now(), author, date:tdy(), type, text, resolved:false });
+  const imgFile = document.getElementById('ud-img')?.files[0];
+  const image   = imgFile ? await compressImage(imgFile) : null;
+  P().updates.unshift({ id:Date.now(), author, date:tdy(), type, text, resolved:false, isBlocker:false, image });
   P().log.unshift({ date:tdy(), text:`${UPD_T[type]?.l||'Update'} posted by ${author}` });
   S.showUF=false; S.ud={ type:'direction', author:'', text:'' };
   save(); render();
@@ -2061,13 +2282,15 @@ function doDeleteUpdate(id) {
 
 // ── doSaveEditUpdate(id) ──────────────────────────────────────────────────
 // Saves edits made in the inline update edit form.
-function doSaveEditUpdate(id) {
+async function doSaveEditUpdate(id) {
   const u = P().updates.find(x => x.id == id);
   if (!u) return;
   const newType = document.querySelector(`[data-edittype="${id}"]`)?.value;
   const newText = (document.querySelector(`[data-edittxt="${id}"]`)?.value || '').trim();
   if (newType) u.type = newType;
   if (newText) u.text = newText;
+  const imgFile = document.querySelector(`[data-editimg="${id}"]`)?.files[0];
+  if (imgFile) u.image = await compressImage(imgFile);
   P().log.unshift({ date:tdy(), text:'Update edited' });
   S.editingUpdateId = null;
   save(); render();
