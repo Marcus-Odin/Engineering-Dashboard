@@ -1449,7 +1449,7 @@ function rInventory() {
     </div>
     <div class="card">
       <div class="card-lbl">Add part to inventory</div>
-      <div style="display:grid;grid-template-columns:2fr 80px 80px 100px 1fr 70px 1fr auto;gap:8px;align-items:end">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr 1fr 2fr;gap:10px;margin-bottom:10px">
         <div>
           <label class="s-label" for="inv-part">Part name</label>
           <input type="text" id="inv-part" style="font-family:var(--sans)">
@@ -1478,10 +1478,8 @@ function rInventory() {
           <label class="s-label" for="inv-url">Supplier URL</label>
           <input type="text" id="inv-url" style="font-family:var(--mono);font-size:11px">
         </div>
-        <div style="padding-bottom:1px">
-          <button data-addinv class="btn-primary" style="font-size:12px;padding:7px 16px;white-space:nowrap;width:100%">Add part</button>
-        </div>
       </div>
+      <button data-addinv class="btn-primary" style="font-size:12px;padding:6px 20px">Add part</button>
     </div>`;
 }
 
