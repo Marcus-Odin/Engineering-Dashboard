@@ -2380,14 +2380,12 @@ document.getElementById('sb').addEventListener('click', e => {
 });
 
 // ── Refresh button ─────────────────────────────────────────────────────────
-document.getElementById('sb-refresh').addEventListener('click', async () => {
+// Full page reload ensures iOS home screen app picks up both new code and new data.
+document.getElementById('sb-refresh').addEventListener('click', () => {
   const btn = document.getElementById('sb-refresh');
-  btn.textContent = '↻ Refreshing…';
+  btn.textContent = '↻ Reloading…';
   btn.disabled = true;
-  await load();
-  render();
-  btn.textContent = '↻ Refresh data';
-  btn.disabled = false;
+  window.location.reload();
 });
 
 // ── Auto-reload when app comes back into focus (iOS home screen) ────────────
